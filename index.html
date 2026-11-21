@@ -1,0 +1,3032 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#14100d">
+<meta name="description" content="Offline-first invoicing for Crossed Threads — automotive upholstery & furniture">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Crossed Threads — Invoicing</title>
+<script src="js/dexie.min.js"></script>
+<script src="js/html2pdf.bundle.min.js"></script>
+<style>
+:root {
+  --bg: #14100d; --bg-secondary: #1a1613; --card: #1f1a16; --card-hover: #2a241e;
+  --border: #3a3028; --border-light: #2a241e;
+  --text: #f5efe6; --text-secondary: #a8998a; --text-tertiary: #6b5d50;
+  --accent: #c17a3a; --accent-dark: #9a5d28; --accent-light: #d9a066; --accent-bg: rgba(193,122,58,0.14);
+  --gold: #d4af37;
+  --success: #6ecf87; --success-bg: rgba(110,207,135,0.14);
+  --warning: #e0b45a; --warning-bg: rgba(224,180,90,0.14);
+  --danger: #e06b5a; --danger-bg: rgba(224,107,90,0.14);
+  --info: #7eb3d9; --info-bg: rgba(126,179,217,0.14);
+  --shadow: 0 4px 12px rgba(0,0,0,0.35); --shadow-lg: 0 8px 24px rgba(0,0,0,0.45);
+  --radius: 14px; --radius-sm: 10px;
+  --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+[data-theme="light"] {
+  --bg: #faf7f2; --bg-secondary: #ffffff; --card: #ffffff; --card-hover: #f5efe6;
+  --border: #e8dfd2; --border-light: #f0e9de;
+  --text: #2a2118; --text-secondary: #7a6a58; --text-tertiary: #a8998a;
+  --accent: #a85f28; --accent-dark: #7f4720; --accent-light: #c17a3a; --accent-bg: rgba(168,95,40,0.1);
+  --gold: #a8861f;
+  --success: #16a34a; --success-bg: rgba(22,163,74,0.1);
+  --warning: #b45309; --warning-bg: rgba(180,83,9,0.1);
+  --danger: #b91c1c; --danger-bg: rgba(185,28,28,0.1);
+  --info: #2563eb; --info-bg: rgba(37,99,235,0.1);
+  --shadow: 0 2px 8px rgba(0,0,0,0.06); --shadow-lg: 0 8px 24px rgba(0,0,0,0.1);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin:0; padding:0; height:100%; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg); color:var(--text); font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+body { padding-bottom: calc(80px + var(--safe-bottom)); }
+button { font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+input, textarea, select { font-family:inherit; font-size:inherit; }
+#app { min-height:100vh; padding-top:var(--safe-top); }
+.page { min-height:100vh; animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.page-header { position:sticky; top:0; z-index:20; background:var(--bg); padding:14px 18px 12px;
+  border-bottom:1px solid var(--border-light); backdrop-filter:blur(10px); }
+.page-title { font-size:24px; font-weight:700; margin:0; letter-spacing:-0.5px; }
+.page-subtitle { color:var(--text-secondary); font-size:13px; margin:2px 0 0; }
+.page-body { padding:16px 18px; }
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.topbar .brand { display:flex; align-items:center; gap:10px; min-width:0; }
+.brand-logo { width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg, var(--accent), var(--accent-dark));
+  display:grid; place-items:center; overflow:hidden; border:1px solid var(--border); flex-shrink:0; color:#fff; }
+.brand-logo img { width:100%; height:100%; object-fit:cover; }
+.brand-logo .placeholder { color:#fff; font-weight:700; font-size:16px; display:grid; place-items:center; width:100%; height:100%; }
+.brand-name { font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:Georgia,serif; letter-spacing:0.2px; }
+.brand-sub { font-size:11px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.icon-btn { width:40px; height:40px; border-radius:12px; background:var(--card); border:1px solid var(--border);
+  display:grid; place-items:center; color:var(--text-secondary); transition:all 0.15s; flex-shrink:0; }
+.icon-btn:active { transform:scale(0.94); background:var(--card-hover); }
+.stats-block { background:linear-gradient(135deg, var(--card), var(--bg-secondary)); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px 18px; margin-bottom:16px; }
+.stat-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; gap:12px; }
+.stat-row + .stat-row { border-top:1px solid var(--border-light); }
+.stat-label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--text-secondary); font-weight:600; margin-bottom:4px; }
+.stat-value { font-size:22px; font-weight:700; letter-spacing:-0.5px; }
+.stat-value.success { color:var(--success); } .stat-value.warning { color:var(--warning); }
+.action-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:22px; }
+.action-card { border:1px solid var(--border); border-radius:var(--radius); padding:16px;
+  text-align:left; display:flex; flex-direction:column; gap:10px; min-height:110px;
+  transition:transform 0.15s; position:relative; overflow:hidden; }
+.action-card:active { transform:scale(0.97); }
+.action-card .icon { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; }
+.action-card .label { font-weight:600; font-size:14px; }
+.action-card .desc { font-size:11px; color:var(--text-secondary); }
+.action-card.new-invoice { background:linear-gradient(135deg, #24301f, #1c2718); border-color:#3a4a2e; }
+.action-card.new-invoice .icon { background:var(--success); color:#14100d; }
+.action-card.new-quote { background:linear-gradient(135deg, #3a2a1a, #2d2114); border-color:#4a3a24; }
+.action-card.new-quote .icon { background:var(--accent); color:#fff; }
+.action-card.record-payment { background:linear-gradient(135deg, #2a1e1e, #2d1818); border-color:#3a2828; }
+.action-card.record-payment .icon { background:#8b5a3c; color:#fff; }
+.action-card.my-invoices { background:var(--card); }
+.action-card.my-invoices .icon { background:var(--card-hover); color:var(--text); }
+[data-theme="light"] .action-card.new-invoice { background:linear-gradient(135deg, #d1fae5, #a7f3d0); border-color:#6ee7b7; }
+[data-theme="light"] .action-card.new-quote { background:linear-gradient(135deg, #fef3c7, #fde68a); border-color:#fcd34d; }
+[data-theme="light"] .action-card.record-payment { background:linear-gradient(135deg, #fee2e2, #fecaca); border-color:#fca5a5; }
+[data-theme="light"] .action-card .icon { color:#fff !important; }
+.section { margin-bottom:20px; }
+.section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.section-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-secondary); }
+.section-link { font-size:13px; color:var(--accent); font-weight:600; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; overflow:hidden; transition:background 0.15s; }
+.card:active { background:var(--card-hover); }
+.invoice-item { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; }
+.invoice-item-info { flex:1; min-width:0; }
+.invoice-item-number { font-weight:600; font-size:14px; margin-bottom:3px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.invoice-item-meta { font-size:12px; color:var(--text-secondary); }
+.invoice-item-amount { text-align:right; font-weight:700; font-size:14px; }
+.invoice-item-date { font-size:11px; color:var(--text-tertiary); margin-top:3px; }
+.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:100px;
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; }
+.badge-paid { background:var(--success-bg); color:var(--success); }
+.badge-partly { background:var(--warning-bg); color:var(--warning); }
+.badge-sent, .badge-unpaid { background:var(--info-bg); color:var(--info); }
+.badge-overdue { background:var(--danger-bg); color:var(--danger); }
+.badge-draft { background:rgba(139,149,167,0.12); color:var(--text-secondary); }
+.badge-quote { background:var(--accent-bg); color:var(--accent); }
+.tabs { display:flex; background:var(--bg-secondary); border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:14px; }
+.tab { flex:1; text-align:center; padding:9px; border-radius:9px; font-size:13px; font-weight:600;
+  color:var(--text-secondary); transition:all 0.15s; }
+.tab.active { background:var(--card); color:var(--text); box-shadow:var(--shadow); }
+.chips { display:flex; gap:8px; overflow-x:auto; padding:4px 0 10px; scrollbar-width:none; }
+.chips::-webkit-scrollbar { display:none; }
+.chip { padding:7px 14px; border-radius:100px; background:var(--card); border:1px solid var(--border);
+  font-size:12px; font-weight:600; color:var(--text-secondary); white-space:nowrap; flex-shrink:0; }
+.chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.search-bar { position:relative; margin-bottom:12px; }
+.search-bar input { width:100%; background:var(--card); border:1px solid var(--border); color:var(--text);
+  padding:11px 14px 11px 40px; border-radius:12px; outline:none; font-size:14px; }
+.search-bar input:focus { border-color:var(--accent); }
+.search-bar svg { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-tertiary); }
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--bg-secondary); border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-around; padding:8px 12px calc(8px + var(--safe-bottom)); z-index:30; }
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px;
+  color:var(--text-tertiary); font-size:10px; font-weight:600; border-radius:10px; }
+.nav-item.active { color:var(--accent); }
+.nav-fab { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg, var(--accent), var(--accent-dark)); color:#fff;
+  display:grid; place-items:center; margin-top:-22px; box-shadow:0 6px 16px rgba(193,122,58,0.45);
+  border:4px solid var(--bg-secondary); }
+.nav-fab:active { transform:scale(0.92); }
+.form-group { margin-bottom:14px; }
+.form-label { display:block; font-size:11px; font-weight:700; color:var(--text-secondary);
+  margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+.form-input, .form-select, .form-textarea { width:100%; background:var(--card); border:1px solid var(--border);
+  color:var(--text); padding:12px 14px; border-radius:12px; outline:none; font-size:15px; transition:border-color 0.15s; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent); }
+.form-textarea { resize:vertical; min-height:70px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 18px;
+  border-radius:12px; font-weight:600; font-size:14px; transition:all 0.15s; border:1px solid transparent; }
+.btn:active { transform:scale(0.97); }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-secondary { background:var(--card); color:var(--text); border-color:var(--border); }
+.btn-success { background:var(--success); color:#14100d; }
+.btn-danger { background:var(--danger-bg); color:var(--danger); }
+.btn-block { width:100%; }
+.btn-sm { padding:8px 14px; font-size:13px; }
+.items-table { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.items-table-head { display:grid; grid-template-columns:1fr 50px 90px 90px 30px; gap:6px;
+  padding:10px 12px; background:var(--bg-secondary); font-size:10px; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary); }
+.items-table-row { display:grid; grid-template-columns:1fr 50px 90px 90px 30px; gap:6px;
+  padding:8px 12px; border-top:1px solid var(--border-light); align-items:center; }
+.item-input { background:transparent; border:1px solid transparent; color:var(--text); padding:6px 8px;
+  border-radius:8px; outline:none; font-size:14px; width:100%; min-width:0; }
+.item-input:focus { background:var(--bg-secondary); border-color:var(--border); }
+.item-input.num { text-align:right; }
+.item-desc-wrap { position:relative; min-width:0; }
+.item-suggestions {
+  position:absolute; left:0; right:0; top:100%; z-index:40;
+  background:var(--card); border:1px solid var(--border); border-radius:10px;
+  box-shadow:var(--shadow-lg); max-height:200px; overflow-y:auto; display:none;
+}
+.item-suggestions.open { display:block; }
+.item-suggestion {
+  padding:10px 12px; font-size:13px; cursor:pointer; border-bottom:1px solid var(--border-light);
+  display:flex; justify-content:space-between; gap:8px; align-items:center;
+}
+.item-suggestion:last-child { border-bottom:none; }
+.item-suggestion:hover, .item-suggestion.active { background:var(--accent-bg); }
+.item-suggestion .sugg-name { font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.item-suggestion .sugg-price { color:var(--accent); font-weight:700; font-size:12px; flex-shrink:0; }
+.item-total { text-align:right; padding:0 8px; font-weight:600; font-size:14px; }
+.item-remove { width:28px; height:28px; border-radius:8px; background:var(--danger-bg); color:var(--danger);
+  display:grid; place-items:center; flex-shrink:0; }
+.totals { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-top:12px; }
+.total-row { display:flex; justify-content:space-between; padding:6px 0; font-size:14px; }
+.total-row.grand { border-top:1px solid var(--border); margin-top:6px; padding-top:12px; font-size:18px; font-weight:700; }
+.total-row.paid { color:var(--success); }
+.total-row.balance { color:var(--warning); font-weight:600; }
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:100;
+  display:flex; align-items:flex-end; justify-content:center; animation:fadeIn 0.2s; }
+[data-theme="light"] .modal-overlay { background:rgba(0,0,0,0.4); }
+.modal { background:var(--bg-secondary); width:100%; max-width:500px; border-radius:20px 20px 0 0;
+  padding:20px; padding-bottom:calc(20px + var(--safe-bottom)); max-height:90vh; overflow-y:auto;
+  animation:slideUp 0.25s; }
+@keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+.modal-title { font-size:18px; font-weight:700; margin:0 0 14px; font-family:Georgia,serif; }
+.modal-handle { width:40px; height:4px; background:var(--border); border-radius:100px; margin:0 auto 14px; }
+.toast { position:fixed; bottom:calc(100px + var(--safe-bottom)); left:50%; transform:translateX(-50%);
+  background:var(--card); border:1px solid var(--border); padding:12px 20px; border-radius:12px;
+  z-index:200; font-size:13px; font-weight:600; box-shadow:var(--shadow-lg); animation:toastIn 0.25s; max-width:90%; }
+@keyframes toastIn { from { transform:translate(-50%, 20px); opacity:0; } to { transform:translate(-50%, 0); opacity:1; } }
+.empty-state { text-align:center; padding:40px 20px; color:var(--text-secondary); }
+.empty-state svg { margin-bottom:12px; opacity:0.4; }
+.empty-state p { margin:8px 0 16px; font-size:14px; }
+.detail-header { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
+.detail-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.payment-history { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.payment-row { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-top:1px solid var(--border-light); }
+.payment-row:first-child { border-top:none; }
+.settings-section { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:16px; }
+.settings-section-title { padding:14px 16px 6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--accent); }
+.settings-item { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-top:1px solid var(--border-light); gap:12px; min-height:48px; }
+.settings-item-label { font-size:14px; font-weight:500; flex:1; min-width:0; }
+.settings-item-value { font-size:13px; color:var(--text-secondary); text-align:right; }
+.settings-item input, .settings-item select, .settings-item textarea { background:transparent; border:none; color:var(--text); text-align:right; outline:none; font-size:14px; flex:1; max-width:60%; }
+.settings-item textarea { resize:vertical; min-height:60px; text-align:left; max-width:100%; }
+.logo-upload { display:flex; align-items:center; gap:14px; padding:14px 16px; border-top:1px solid var(--border-light); }
+.logo-preview { width:60px; height:60px; border-radius:12px; background:var(--bg-secondary); border:1px solid var(--border); display:grid; place-items:center; overflow:hidden; flex-shrink:0; }
+.logo-preview img { width:100%; height:100%; object-fit:cover; }
+.logo-preview .placeholder { color:var(--text-tertiary); }
+.theme-options { display:flex; gap:8px; padding:12px 16px; }
+.theme-option { flex:1; text-align:center; padding:10px; border:1px solid var(--border); border-radius:10px; font-size:12px; font-weight:600; }
+.theme-option.active { background:var(--accent-bg); border-color:var(--accent); color:var(--accent); }
+.print-container { display:none; }
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  body > *:not(.print-container) { display:none !important; }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .print-container {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .invoice-print {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    padding: 8mm 10mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: auto;
+  }
+  .invoice-print::before {
+    top: 4mm; left: 4mm; right: 4mm; bottom: 4mm;
+  }
+  .ct-header, .ct-parties, .ct-totals-wrap, .ct-payment-stamp, .ct-notes, .ct-pay-history, .ct-footer {
+    page-break-inside: avoid !important;
+  }
+  .ct-table { page-break-inside: auto; }
+  .ct-table thead { display: table-header-group; }
+  .ct-table tr { page-break-inside: avoid; page-break-after: auto; }
+  .ct-table th, .ct-table td { padding: 8px 10px !important; }
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+}
+
+/* ==================== CROSSED THREADS STAMP ==================== */
+.payment-stamp-wrapper { flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:transform 0.2s ease; transform-origin:center; }
+
+/* ==================== CROSSED THREADS PRINT INVOICE ==================== */
+.invoice-print {
+  background: #faf7f2;
+  color: #2a2118;
+  padding: 34px 40px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12.5px;
+  min-height: 297mm;
+  width: 210mm;
+  max-width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  line-height: 1.55;
+}
+.invoice-print::before {
+  content: '';
+  position: absolute;
+  top: 14px; left: 14px; right: 14px; bottom: 14px;
+  border: 1.5px dashed #c9a227;
+  border-radius: 10px;
+  pointer-events: none;
+  opacity: 0.55;
+}
+.invoice-print > * { position: relative; z-index: 1; }
+
+.ct-header { display:flex; justify-content:space-between; align-items:flex-start; gap:22px;
+  padding-bottom:20px; margin-bottom:22px; border-bottom:2px solid #2a2118; }
+.ct-brand-block { display:flex; gap:16px; align-items:center; }
+.ct-logo-mark {
+  width:72px; height:72px; border-radius:50%;
+  background: radial-gradient(circle at 30% 30%, #c17a3a, #9a5d28 70%, #6b3f1a);
+  display:grid; place-items:center; flex-shrink:0; color:#faf7f2;
+  box-shadow: inset 0 0 0 2px #faf7f2, inset 0 0 0 3.5px #a85f28;
+  overflow:hidden;
+}
+.ct-logo-mark img { width:100%; height:100%; object-fit:cover; }
+.ct-company-name { font-family: Georgia, 'Times New Roman', serif; font-size:26px; font-weight:700;
+  color:#2a2118; margin:0 0 2px; letter-spacing:0.5px; }
+.ct-tagline { font-size:10px; text-transform:uppercase; letter-spacing:2px; color:#a85f28;
+  font-weight:600; margin-bottom:6px; }
+.ct-company-info { font-size:10.5px; color:#6b5d50; line-height:1.6; }
+.ct-doc-info { text-align:right; flex-shrink:0; }
+.ct-doc-title { font-family: Georgia, serif; font-size:34px; font-weight:700; letter-spacing:5px;
+  margin:0 0 6px; color:#a85f28; line-height:1; }
+.ct-doc-type-quote { color:#7f4720; }
+.ct-doc-no { font-size:13px; font-weight:700; margin-bottom:4px; letter-spacing:0.5px; }
+.ct-doc-date { font-size:10.5px; color:#6b5d50; margin-bottom:2px; }
+
+.ct-parties { display:grid; grid-template-columns: 1.2fr 1fr; gap:14px; margin-bottom:20px; }
+.ct-panel { padding:14px 16px; background:#f4ede2; border-radius:8px; border-left:3px solid #a85f28; }
+.ct-panel-label { font-size:9px; text-transform:uppercase; letter-spacing:1.4px; color:#8a6a4d;
+  font-weight:700; margin-bottom:6px; }
+.ct-panel-name { font-size:14px; font-weight:700; margin-bottom:3px; color:#2a2118; }
+.ct-panel-info { font-size:10.5px; color:#6b5d50; line-height:1.55; }
+.ct-project-row { display:flex; gap:10px; margin-bottom:4px; }
+.ct-project-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:#8a6a4d;
+  font-weight:700; flex-shrink:0; width:60px; padding-top:1px; }
+.ct-project-value { font-size:11.5px; font-weight:600; color:#2a2118; word-break:break-word; }
+
+.ct-status-banner { display:inline-block; padding:5px 16px; border:2px solid; border-radius:6px;
+  font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin-bottom:16px;
+  transform:rotate(-1.5deg); }
+.ct-status-paid { color:#16a34a; border-color:#16a34a; }
+.ct-status-partly { color:#b45309; border-color:#b45309; }
+.ct-status-unpaid { color:#b91c1c; border-color:#b91c1c; }
+.ct-status-quote { color:#a85f28; border-color:#a85f28; }
+
+.ct-table { width:100%; border-collapse:collapse; margin-bottom:18px; }
+.ct-table th { background:#2a2118; color:#faf7f2; padding:11px 12px; text-align:left;
+  font-size:10px; text-transform:uppercase; letter-spacing:1.2px; font-weight:700; }
+.ct-table th:nth-child(2) { text-align:center; width:60px; }
+.ct-table th:nth-child(3) { text-align:right; width:110px; }
+.ct-table th:nth-child(4) { text-align:right; width:120px; }
+.ct-table td { padding:11px 12px; border-bottom:1px dashed #d8cdbb; font-size:12px; vertical-align:top; }
+.ct-table td:nth-child(2) { text-align:center; }
+.ct-table td:nth-child(3) { text-align:right; color:#6b5d50; }
+.ct-table td:nth-child(4) { text-align:right; font-weight:700; color:#2a2118; }
+
+/* ========== REVISION 1: Horizontal premium totals strip ========== */
+.ct-totals-wrap { margin-bottom:18px; page-break-inside:avoid; }
+.ct-totals {
+  display:flex; align-items:stretch; width:100%;
+  background:#f4ede2; border:1px solid #d8cdbb; border-radius:10px;
+  overflow:hidden;
+}
+.ct-total-row {
+  flex:1 1 0; min-width:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; padding:10px 12px;
+  border-left:1px dashed #d8cdbb;
+}
+.ct-total-row:first-child { border-left:none; }
+.ct-total-label { font-size:8.5px; text-transform:uppercase; letter-spacing:1.2px;
+  color:#8a6a4d; font-weight:700; white-space:nowrap; }
+.ct-total-value { font-size:13.5px; font-weight:700; color:#2a2118;
+  white-space:nowrap; font-variant-numeric:tabular-nums; }
+.ct-total-row.grand { background:linear-gradient(135deg,#b06a30,#8a4a1e); }
+.ct-total-row.grand .ct-total-label { color:#f7e9d7; }
+.ct-total-row.grand .ct-total-value { color:#fff; font-size:15.5px;
+  font-family:Georgia,serif; letter-spacing:0.3px; }
+.ct-total-row.paid { background:#eef7ee; }
+.ct-total-row.paid .ct-total-value { color:#15803d; }
+.ct-total-row.balance { background:#fdf3dc; }
+.ct-total-row.balance .ct-total-value { color:#b45309; }
+
+.ct-payment-stamp { display:flex; justify-content:space-between; align-items:center; gap:16px;
+  background:#f4ede2; border-radius:10px; padding:14px 18px; margin-bottom:18px;
+  border:1px dashed #c9a227; page-break-inside:avoid; }
+.ct-payment-details { flex:1; }
+.ct-payment-title { font-size:9px; text-transform:uppercase; letter-spacing:1.4px; color:#8a6a4d;
+  font-weight:700; margin-bottom:6px; }
+.ct-payment-body { font-size:11px; color:#4a3a2a; line-height:1.7; white-space:pre-wrap; }
+
+.ct-notes { background:#f4ede2; border-radius:8px; padding:12px 16px; margin-bottom:16px; border-left:3px solid #c9a227; page-break-inside:avoid; }
+.ct-notes-title { font-size:9px; text-transform:uppercase; letter-spacing:1.4px; color:#8a6a4d; font-weight:700; margin-bottom:5px; }
+.ct-notes-body { font-size:11px; color:#4a3a2a; white-space:pre-wrap; line-height:1.6; }
+
+.ct-pay-history { margin-bottom:16px; page-break-inside:avoid; }
+.ct-pay-history-title { font-size:9px; text-transform:uppercase; letter-spacing:1.4px; color:#8a6a4d; font-weight:700; margin-bottom:6px; }
+.ct-pay-row { display:flex; justify-content:space-between; padding:5px 0; font-size:11px; border-bottom:1px dashed #e0d5c4; }
+
+.ct-footer { margin-top:26px; padding-top:16px; text-align:center;
+  border-top:1.5px dashed #c9a227; font-size:10.5px; color:#6b5d50; line-height:1.7;
+  page-break-inside:avoid; }
+.ct-footer-brand { font-family: Georgia, serif; font-size:13px; font-weight:700; color:#a85f28;
+  letter-spacing:1.5px; margin-bottom:4px; }
+.ct-footer-crossed { font-size:9px; letter-spacing:3px; color:#c9a227; margin: 4px 0 8px; }
+
+.ct-watermark { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-22deg);
+  font-family: Georgia, serif; font-size:120px; font-weight:700; color:#a85f28; opacity:0.035;
+  pointer-events:none; letter-spacing:6px; white-space:nowrap; z-index:0; }
+
+.flex { display:flex; } .flex-between { display:flex; justify-content:space-between; align-items:center; }
+.gap-8 { gap:8px; } .gap-12 { gap:12px; }
+.mt-8 { margin-top:8px; } .mt-16 { margin-top:16px; }
+.mb-8 { margin-bottom:8px; } .mb-16 { margin-bottom:16px; }
+.text-sm { font-size:13px; } .text-muted { color:var(--text-secondary); }
+.text-center { text-align:center; } .fw-700 { font-weight:700; }
+.divider { height:1px; background:var(--border-light); margin:14px 0; }
+.list-item { display:flex; align-items:center; gap:12px; padding:14px 16px; border-top:1px solid var(--border-light); }
+.list-item:first-child { border-top:none; }
+.list-item-info { flex:1; min-width:0; }
+.list-item-title { font-weight:600; font-size:14px; margin-bottom:2px; }
+.list-item-sub { font-size:12px; color:var(--text-secondary); }
+.customer-avatar { width:42px; height:42px; border-radius:50%; background:var(--accent-bg); color:var(--accent); display:grid; place-items:center; font-weight:700; font-size:16px; flex-shrink:0; }
+.product-item { display:flex; align-items:center; gap:12px; padding:12px 16px; border-top:1px solid var(--border-light); }
+.product-item:first-child { border-top:none; }
+.product-price { font-weight:700; font-size:14px; color:var(--accent); }
+.back-btn { display:flex; align-items:center; gap:6px; color:var(--accent); font-weight:600; font-size:14px; padding:6px 0; }
+.detail-summary { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; text-align:center; margin-bottom:12px; }
+.detail-summary-value { font-size:24px; font-weight:700; }
+.detail-summary-label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--text-secondary); font-weight:600; margin-top:4px; }
+.detail-summary-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.scan-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
+
+.pin-screen { position:fixed; inset:0; z-index:999; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; animation:fadeIn 0.25s ease; }
+.pin-card { background:var(--card); border:1px solid var(--border); border-radius:24px; padding:32px 24px; width:100%; max-width:360px; text-align:center; box-shadow:var(--shadow-lg); }
+.pin-dots { display:flex; justify-content:center; gap:14px; margin:22px 0 28px; }
+.pin-dot { width:16px; height:16px; border-radius:50%; border:2px solid var(--border); transition:all 0.15s ease; }
+.pin-dot.filled { background:var(--accent); border-color:var(--accent); box-shadow:0 0 12px var(--accent-bg); }
+.pin-keypad { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; max-width:280px; margin:0 auto; }
+.pin-key { width:64px; height:64px; border-radius:50%; background:var(--bg-secondary); border:1px solid var(--border); font-size:22px; font-weight:700; color:var(--text); display:grid; place-items:center; margin:0 auto; transition:all 0.12s; user-select:none; }
+.pin-key:active { transform:scale(0.92); background:var(--card-hover); border-color:var(--accent); }
+.shake { animation:shake 0.4s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-10px);} 40%,80%{transform:translateX(10px);} }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+<div id="print-root" class="print-container"></div>
+
+<input type="file" id="logo-input" accept="image/*" style="display:none">
+
+<script>
+// ==================== Storage (Dexie + IndexedDB) ====================
+const db = new Dexie('CrossedThreadsDB');
+db.version(1).stores({
+  appState: 'id'   // id = 'main' holds the full app data blob for simplicity + migration safety
+});
+// Future versions can expand to normalized tables while migrating the blob.
+
+const Store = {
+  KEY: 'crossed_threads_data_v1', // legacy localStorage key for migration
+  data: null,
+  defaultData() {
+    return {
+      business: {
+        logo: '',
+        name: 'Crossed Threads',
+        address: 'Buziga, Kampala, Uganda',
+        phone: '+256 704 808 819',
+        email: 'crossedthreads@gmail.com',
+        currency: 'UGX',
+        invoicePrefix: 'INV-CT', nextInvoiceNo: 1,
+        quotePrefix: 'QUO-CT', nextQuoteNo: 1,
+        defaultTax: 18,
+        paymentDetails: 'MTN MoMo: 0704 808 819\nAirtel Money: 0704 808 819\nBank: Stanbic Bank — Acc: 902001XXXXXX',
+        footerNotes: 'Thank you for choosing Crossed Threads. Crafted with precision — from your car to your couch. Goods once sold are not returnable. This invoice is valid for 30 days from the date of issue.',
+        stamp: {
+          enabled: true,
+          header: 'CROSSED THREADS',
+          location: 'BUZIGA · KAMPALA · UGANDA',
+          phone: 'TEL: +256 704 808 819',
+          dateMode: 'auto',
+          customDate: '',
+          tiltAngle: -6,
+          inkColor: '#14224a',
+          dateColor: '#c82424'
+        }
+      },
+      security: { pin: '1234', enabled: true },
+      invoices: [], quotes: [], customers: [], products: [], expenses: [], theme: 'dark',
+      auditLog: []
+    };
+  },
+  async load() {
+    try {
+      // Prefer IndexedDB
+      const row = await db.appState.get('main');
+      if (row && row.data) {
+        this.data = row.data;
+      } else {
+        // Migrate from legacy localStorage if present
+        const raw = localStorage.getItem(this.KEY);
+        if (raw) {
+          this.data = JSON.parse(raw);
+          await this.persist(); // write to IndexedDB
+          // Optionally clear legacy after successful migration
+          // localStorage.removeItem(this.KEY);
+        } else {
+          this.data = this.defaultData();
+          this.seedSampleData();
+          await this.persist();
+        }
+      }
+      // Normalize / merge defaults
+      const def = this.defaultData();
+      this.data.business = { ...def.business, ...(this.data.business || {}) };
+      if (!this.data.business.stamp) this.data.business.stamp = def.business.stamp;
+      else this.data.business.stamp = { ...def.business.stamp, ...this.data.business.stamp };
+      if (!this.data.security) this.data.security = def.security;
+      else this.data.security = { ...def.security, ...this.data.security };
+      if (!this.data.invoices) this.data.invoices = [];
+      if (!this.data.quotes) this.data.quotes = [];
+      if (!this.data.customers) this.data.customers = [];
+      if (!this.data.products) this.data.products = [];
+      if (!this.data.expenses) this.data.expenses = [];
+      if (!this.data.auditLog) this.data.auditLog = [];
+      if (!this.data.theme) this.data.theme = 'dark';
+    } catch (e) {
+      console.error('Store load error', e);
+      this.data = this.defaultData();
+      this.seedSampleData();
+    }
+    return this.data;
+  },
+  async persist() {
+    try {
+      await db.appState.put({ id: 'main', data: this.data, updatedAt: Date.now() });
+    } catch (e) {
+      console.error('Persist failed', e);
+      // fallback to localStorage
+      try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); } catch (_) {}
+    }
+  },
+  save() {
+    // Fire-and-forget async persist so existing sync call sites still work
+    this.persist();
+  },
+  async exportBackup() {
+    return JSON.stringify({
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data: this.data
+    }, null, 2);
+  },
+  async importBackup(jsonStr) {
+    const parsed = JSON.parse(jsonStr);
+    if (!parsed || !parsed.data || !parsed.data.business) throw new Error('Invalid backup format');
+    this.data = parsed.data;
+    await this.persist();
+  },
+  seedSampleData() {
+    const c1 = { id: uid(), name: 'Naka Qulthum', phone: '0704808819', email: 'naka@example.com', address: 'Buziga, Kampala', createdAt: Date.now() };
+    const c2 = { id: uid(), name: 'Ndegeya Motors Ltd', phone: '0788001122', email: 'info@ndegeya.co', address: 'Industrial Area, Kampala', createdAt: Date.now() };
+    this.data.customers = [c1, c2];
+    this.data.invoices = [
+      {
+        id: uid(), number: 'INV-CT0003', type: 'invoice',
+        customerId: c1.id, customerName: c1.name, customerPhone: c1.phone, customerEmail: c1.email, customerAddress: c1.address,
+        vehicleMake: 'Toyota', vehicleModel: 'Land Cruiser V8', vehicleReg: 'UBH 234K',
+        date: '2026-11-15', dueDate: '2026-11-29',
+        items: [
+          { description: 'Full Interior Detailing — Leather + Carpets', qty: 1, price: 450000, total: 450000 },
+          { description: 'Dashboard Restoration & UV Protect', qty: 1, price: 180000, total: 180000 },
+          { description: 'Headliner Steam Clean', qty: 1, price: 120000, total: 120000 },
+          { description: 'Leather Seat Conditioner Treatment', qty: 1, price: 90000, total: 90000 }
+        ],
+        taxRate: 18, subtotal: 840000, tax: 151200, total: 991200,
+        amountPaid: 991200, balance: 0, status: 'paid',
+        notes: 'Client requested pickup from Buziga residence.',
+        payments: [{ amount: 991200, date: '2026-11-15', method: 'MTN MoMo', note: 'Full payment received' }],
+        createdAt: Date.now() - 86400000
+      },
+      {
+        id: uid(), number: 'INV-CT0002', type: 'invoice',
+        customerId: c2.id, customerName: c2.name, customerPhone: c2.phone, customerEmail: c2.email, customerAddress: c2.address,
+        vehicleMake: 'Toyota', vehicleModel: 'Hilux Double Cab', vehicleReg: 'UBA 909X',
+        date: '2026-11-12', dueDate: '2026-11-26',
+        items: [
+          { description: 'Custom Leather Seat Upholstery — Full Set', qty: 1, price: 1850000, total: 1850000 },
+          { description: 'Door Panel Trim Restoration', qty: 4, price: 120000, total: 480000 },
+          { description: 'Steering Wheel Leather Wrap', qty: 1, price: 350000, total: 350000 }
+        ],
+        taxRate: 18, subtotal: 2680000, tax: 482400, total: 3162400,
+        amountPaid: 1500000, balance: 1662400, status: 'partly',
+        notes: 'Deposit received. Balance due on delivery.',
+        payments: [{ amount: 1500000, date: '2026-11-12', method: 'Bank Transfer', note: '50% deposit' }],
+        createdAt: Date.now() - 172800000
+      },
+      {
+        id: uid(), number: 'INV-CT0001', type: 'invoice',
+        customerId: c1.id, customerName: c1.name, customerPhone: c1.phone, customerEmail: c1.email, customerAddress: c1.address,
+        vehicleMake: 'Furniture Project', vehicleModel: '3-Seater Sofa Set', vehicleReg: 'CT-SOFA-01',
+        date: '2026-11-08', dueDate: '2026-11-22',
+        items: [
+          { description: 'Custom Sofa Upholstery — Premium Velvet', qty: 1, price: 1400000, total: 1400000 },
+          { description: 'Cushion Refilling & Reshaping (Set of 6)', qty: 6, price: 85000, total: 510000 },
+          { description: 'Piping & Stitching Detail Finish', qty: 1, price: 120000, total: 120000 }
+        ],
+        taxRate: 18, subtotal: 2030000, tax: 365400, total: 2395400,
+        amountPaid: 0, balance: 2395400, status: 'sent',
+        notes: 'Fabric selection: royal navy velvet. Delivery to Kololo.',
+        payments: [],
+        createdAt: Date.now() - 259200000
+      }
+    ];
+    this.data.products = [
+      { id: uid(), name: 'Full Interior Detailing — Leather + Carpets', category: 'Detailing', price: 450000, archived: false },
+      { id: uid(), name: 'Custom Leather Seat Upholstery — Full Set', category: 'Upholstery', price: 1850000, archived: false },
+      { id: uid(), name: 'Fabric Seat Upholstery', category: 'Upholstery', price: 1200000, archived: false },
+      { id: uid(), name: 'Dashboard Restoration & UV Protect', category: 'Restoration', price: 180000, archived: false },
+      { id: uid(), name: 'Roof Lining / Headliner Replacement', category: 'Upholstery', price: 280000, archived: false },
+      { id: uid(), name: 'Door Panel Re-trimming', category: 'Upholstery', price: 120000, archived: false },
+      { id: uid(), name: 'Steering Wheel Leather Wrap', category: 'Upholstery', price: 350000, archived: false },
+      { id: uid(), name: 'Carpet Replacement', category: 'Upholstery', price: 450000, archived: false },
+      { id: uid(), name: 'Soundproofing Package', category: 'Restoration', price: 650000, archived: false },
+      { id: uid(), name: 'Custom Stitching / Piping Detail', category: 'Upholstery', price: 120000, archived: false },
+      { id: uid(), name: 'Custom Sofa Upholstery — Premium Velvet', category: 'Furniture', price: 1400000, archived: false },
+      { id: uid(), name: 'Cushion Refilling & Reshaping', category: 'Furniture', price: 85000, archived: false },
+      { id: uid(), name: 'Carpet Deep Steam Clean', category: 'Detailing', price: 150000, archived: false }
+    ];
+    this.data.expenses = [
+      { id: uid(), description: 'Premium leather hides (2 hides)', amount: 480000, date: '2026-11-10', category: 'Materials', note: 'Supplier: Kampala Leather', createdAt: Date.now() - 200000000 },
+      { id: uid(), description: 'Fuel for client pickups', amount: 85000, date: '2026-11-14', category: 'Transport', note: '', createdAt: Date.now() - 100000000 }
+    ];
+    this.save();
+  }
+};
+
+// ==================== Helpers ====================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+function formatCurrency(amount, currency) {
+  currency = currency || (Store.data && Store.data.business.currency) || 'UGX';
+  const num = Number(amount) || 0;
+  const hasDecimal = Math.abs(num - Math.round(num)) > 0.001;
+  const formatted = num.toLocaleString('en-US', {
+    minimumFractionDigits: hasDecimal ? 2 : 0,
+    maximumFractionDigits: 2
+  });
+  return currency + ' ' + formatted;
+}
+
+function formatNumber(amount) {
+  const num = Number(amount) || 0;
+  const hasDecimal = Math.abs(num - Math.round(num)) > 0.001;
+  return num.toLocaleString('en-US', { minimumFractionDigits: hasDecimal ? 2 : 0, maximumFractionDigits: 2 });
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatStampDate(dateStr) {
+  let d = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(d.getTime())) d = new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+// ========== REVISION 2: Build a safe human-readable PDF filename ==========
+function buildPrintFilename(doc) {
+  const vehicle = [doc.vehicleMake, doc.vehicleModel].filter(Boolean).join(' ').trim();
+  const base = vehicle || (doc.type === 'quote' ? 'Quotation' : 'Invoice');
+  const number = doc.number || (doc.type === 'quote' ? 'QUOTE' : 'INVOICE');
+  const datePart = doc.date || todayStr();
+  return `${base}_${number}_${datePart}`
+    .replace(/[\\/:*?"<>|\n\r\t]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function calculateStatus(doc) {
+  if (doc.status === 'cancelled') return 'cancelled';
+  if (doc.type === 'quote') {
+    if (doc.status === 'accepted' || doc.convertedToInvoiceId) return 'accepted';
+    if (doc.status === 'rejected') return 'rejected';
+    if (doc.status === 'expired') return 'expired';
+    if (doc.status === 'sent') return 'sent';
+    return 'draft';
+  }
+  if (doc.amountPaid >= doc.total && doc.total > 0) return 'paid';
+  if (doc.amountPaid > 0 && doc.amountPaid < doc.total) {
+    if (doc.dueDate && new Date(doc.dueDate) < new Date(todayStr())) return 'overdue';
+    return 'partly';
+  }
+  if (doc.dueDate && new Date(doc.dueDate) < new Date(todayStr())) return 'overdue';
+  return 'sent';
+}
+
+function statusLabel(status) {
+  return {
+    paid:'PAID', partly:'PARTLY PAID', sent:'SENT', overdue:'OVERDUE',
+    draft:'DRAFT', unpaid:'NOT PAID', cancelled:'CANCELLED',
+    accepted:'ACCEPTED', rejected:'REJECTED', expired:'EXPIRED'
+  }[status] || (status || '').toUpperCase();
+}
+
+function statusBadgeClass(status) {
+  return {
+    paid:'badge-paid', partly:'badge-partly', sent:'badge-sent', overdue:'badge-overdue',
+    draft:'badge-draft', unpaid:'badge-unpaid', cancelled:'badge-overdue',
+    accepted:'badge-paid', rejected:'badge-overdue', expired:'badge-draft'
+  }[status] || 'badge-draft';
+}
+
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ==================== Crossed Threads Needle Mark ====================
+function crossedNeedlesSVG(size, color) {
+  color = color || 'currentColor';
+  size = size || 28;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g stroke="${color}" stroke-width="2" stroke-linecap="round">
+      <line x1="8" y1="8" x2="31" y2="31"/>
+      <ellipse cx="9.5" cy="9.5" rx="1.6" ry="3" transform="rotate(45 9.5 9.5)" fill="${color}" stroke="none"/>
+      <line x1="32" y1="8" x2="9" y2="31"/>
+      <ellipse cx="30.5" cy="9.5" rx="1.6" ry="3" transform="rotate(-45 30.5 9.5)" fill="${color}" stroke="none"/>
+      <path d="M 31 31 Q 36 34 33 37" stroke-width="1.4" opacity="0.7"/>
+      <path d="M 9 31 Q 4 34 7 37" stroke-width="1.4" opacity="0.7"/>
+    </g>
+  </svg>`;
+}
+
+// ==================== Crossed Threads Premium Stamp ====================
+function renderStampSVG(dateSource) {
+  const stampConfig = (Store.data && Store.data.business && Store.data.business.stamp) || {
+    enabled: true, header: 'CROSSED THREADS', location: 'BUZIGA · KAMPALA · UGANDA',
+    phone: 'TEL: +256 704 808 819', dateMode: 'auto', customDate: '',
+    tiltAngle: -6, inkColor: '#14224a', dateColor: '#c82424'
+  };
+
+  if (stampConfig.enabled === false) return '';
+
+  let dateText = '';
+  if (stampConfig.dateMode === 'custom' && stampConfig.customDate) {
+    dateText = stampConfig.customDate.toUpperCase();
+  } else if (stampConfig.dateMode === 'today') {
+    dateText = formatStampDate(todayStr());
+  } else {
+    dateText = formatStampDate(dateSource || todayStr());
+  }
+
+  const header = (stampConfig.header || 'CROSSED THREADS').toUpperCase();
+  const location = stampConfig.location || 'BUZIGA · KAMPALA · UGANDA';
+  const phone = stampConfig.phone || 'TEL: +256 704 808 819';
+  const ink = stampConfig.inkColor || '#14224a';
+  const dateColor = stampConfig.dateColor || '#c82424';
+  const tilt = stampConfig.tiltAngle !== undefined ? stampConfig.tiltAngle : -6;
+
+  const uid = 'ctstmp_' + Math.random().toString(36).substr(2, 6);
+
+  return `
+  <div class="payment-stamp-wrapper" style="transform: rotate(${tilt}deg);">
+    <svg width="270" height="168" viewBox="0 0 280 174" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="${uid}_distress" x="-15%" y="-15%" width="130%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="4" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.1" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+          <feGaussianBlur in="displaced" stdDeviation="0.22" result="soft" />
+          <feComponentTransfer in="soft"><feFuncA type="linear" slope="0.94" /></feComponentTransfer>
+        </filter>
+        <mask id="${uid}_mask">
+          <rect x="0" y="0" width="280" height="174" fill="white"/>
+          <circle cx="48" cy="38" r="4" fill="black" opacity="0.28" filter="blur(1px)"/>
+          <circle cx="232" cy="136" r="5" fill="black" opacity="0.32" filter="blur(1px)"/>
+          <circle cx="198" cy="32" r="3.5" fill="black" opacity="0.24"/>
+          <circle cx="82" cy="140" r="4" fill="black" opacity="0.28"/>
+        </mask>
+        <path id="${uid}_topArc" d="M 28 88 A 118 66 0 0 1 252 88" fill="none"/>
+        <path id="${uid}_botArc1" d="M 36 82 A 108 58 0 0 0 244 82" fill="none"/>
+        <path id="${uid}_botArc2" d="M 20 94 A 122 70 0 0 0 260 94" fill="none"/>
+      </defs>
+
+      <g filter="url(#${uid}_distress)" mask="url(#${uid}_mask)">
+        <ellipse cx="140" cy="87" rx="132" ry="80" fill="none" stroke="${ink}"
+          stroke-width="2.2" stroke-dasharray="7 4" stroke-linecap="round"/>
+        <ellipse cx="140" cy="87" rx="121" ry="70" fill="none" stroke="${ink}" stroke-width="2.4"/>
+        <ellipse cx="140" cy="87" rx="112" ry="62" fill="none" stroke="${ink}"
+          stroke-width="1.1" stroke-dasharray="3 3" opacity="0.7"/>
+
+        <text font-family="'Georgia', 'Times New Roman', serif" font-weight="700" font-size="17"
+          letter-spacing="2.5" fill="${ink}">
+          <textPath href="#${uid}_topArc" startOffset="50%" text-anchor="middle">${escapeHTML(header)}</textPath>
+        </text>
+
+        <g transform="translate(22, 87)" stroke="${ink}" stroke-width="1.8" stroke-linecap="round">
+          <line x1="-8" y1="-8" x2="8" y2="8"/>
+          <line x1="8" y1="-8" x2="-8" y2="8"/>
+          <circle cx="8" cy="8" r="1.6" fill="${ink}" stroke="none"/>
+          <circle cx="-8" cy="8" r="1.6" fill="${ink}" stroke="none"/>
+        </g>
+        <g transform="translate(258, 87)" stroke="${ink}" stroke-width="1.8" stroke-linecap="round">
+          <line x1="-8" y1="-8" x2="8" y2="8"/>
+          <line x1="8" y1="-8" x2="-8" y2="8"/>
+          <circle cx="8" cy="8" r="1.6" fill="${ink}" stroke="none"/>
+          <circle cx="-8" cy="8" r="1.6" fill="${ink}" stroke="none"/>
+        </g>
+
+        <rect x="58" y="66" width="164" height="36" rx="4" fill="none"
+          stroke="${dateColor}" stroke-width="0.9" stroke-dasharray="3 2" opacity="0.45"/>
+        <text x="140" y="84" font-family="'Courier New', Monaco, 'Consolas', monospace"
+          font-weight="900" font-size="24" letter-spacing="3" fill="${dateColor}"
+          text-anchor="middle" dominant-baseline="central">${escapeHTML(dateText)}</text>
+
+        <text font-family="'Courier New', 'Trebuchet MS', monospace" font-weight="700"
+          font-size="11.5" letter-spacing="1.6" fill="${ink}">
+          <textPath href="#${uid}_botArc1" startOffset="50%" text-anchor="middle">${escapeHTML(location)}</textPath>
+        </text>
+
+        <text font-family="'Courier New', 'Trebuchet MS', monospace" font-weight="900"
+          font-size="12.5" letter-spacing="1.8" fill="${ink}">
+          <textPath href="#${uid}_botArc2" startOffset="50%" text-anchor="middle">${escapeHTML(phone)}</textPath>
+        </text>
+      </g>
+    </svg>
+  </div>
+  `;
+}
+
+function toast(message) {
+  const root = document.getElementById('toast-root');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = message;
+  root.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.25s'; setTimeout(() => el.remove(), 250); }, 2200);
+}
+
+function showModal(html) {
+  document.getElementById('modal-root').innerHTML = `<div class="modal-overlay" onclick="if(event.target===this) closeModal()"><div class="modal"><div class="modal-handle"></div>${html}</div></div>`;
+}
+function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
+
+function confirmDialog(title, message, onConfirm) {
+  showModal(`
+    <h3 class="modal-title">${escapeHTML(title)}</h3>
+    <p style="color:var(--text-secondary); margin:0 0 18px; font-size:14px;">${escapeHTML(message)}</p>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" style="flex:1" onclick="closeModal(); (${onConfirm})();">Delete</button>
+    </div>
+  `);
+}
+
+// ==================== App ====================
+const App = {
+  state: { view: 'home', params: {}, invoiceTab: 'invoices', filter: 'all', search: '', pinInput: '' },
+
+  isLocked() {
+    const sec = (Store.data && Store.data.security) || { pin: '1234', enabled: true };
+    if (sec.enabled === false) return false;
+    return sessionStorage.getItem('crossed_threads_unlocked') !== 'true';
+  },
+
+  async init() {
+    // Request persistent storage to reduce eviction risk
+    if (navigator.storage && navigator.storage.persist) {
+      try {
+        const granted = await navigator.storage.persist();
+        console.log('Persistent storage:', granted ? 'granted' : 'not granted');
+      } catch (e) { /* ignore */ }
+    }
+    // Register Service Worker (handles GitHub Pages subpaths via relative URLs)
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+        console.log('SW registered', reg.scope);
+      } catch (e) { console.warn('SW registration failed', e); }
+    }
+    await Store.load();
+    this.applyTheme();
+    this.setupKeypadListener();
+    this.setupLogoInput();
+    if (this.isLocked()) this.renderLockScreen();
+    else this.render();
+    window.addEventListener('popstate', (e) => {
+      if (this.isLocked()) { this.renderLockScreen(); return; }
+      if (e.state && e.state.view) {
+        this.state.view = e.state.view;
+        this.state.params = e.state.params || {};
+        this.render();
+      } else {
+        this.state.view = 'home'; this.state.params = {};
+        this.render();
+      }
+    });
+  },
+
+  setupLogoInput() {
+    const logoInput = document.getElementById('logo-input');
+    if (logoInput) {
+      logoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          Store.data.business.logo = ev.target.result;
+          Store.save();
+          toast('Logo updated');
+          App.render();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  },
+
+  navigate(view, params = {}) {
+    if (this.isLocked()) { this.renderLockScreen(); return; }
+    this.state.view = view;
+    this.state.params = params;
+    history.pushState({ view, params }, '', '#' + view);
+    this.render();
+    window.scrollTo(0, 0);
+  },
+
+  renderLockScreen() {
+    const app = document.getElementById('app');
+    const b = Store.data.business;
+    const logoHtml = b.logo
+      ? `<img src="${b.logo}" alt="logo" style="width:100%;height:100%;object-fit:cover;">`
+      : crossedNeedlesSVG(32, '#fff');
+    const pinLen = (this.state.pinInput || '').length;
+
+    app.innerHTML = `
+      <div class="pin-screen">
+        <div class="pin-card">
+          <div style="width:68px; height:68px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); display:grid; place-items:center; margin:0 auto 14px; overflow:hidden; color:#fff; box-shadow:inset 0 0 0 2px var(--card), inset 0 0 0 3.5px var(--accent-dark);">
+            ${logoHtml}
+          </div>
+          <h2 style="font-size:22px; font-weight:700; margin:0 0 2px; color:var(--text); font-family:Georgia,serif; letter-spacing:0.3px;">${escapeHTML(b.name || 'Crossed Threads')}</h2>
+          <p style="font-size:10px; color:var(--accent); margin:0 0 20px; text-transform:uppercase; letter-spacing:2px; font-weight:600;">Automotive · Upholstery · Furniture</p>
+
+          <div class="pin-dots" id="pin-dots-container">
+            <div class="pin-dot ${pinLen >= 1 ? 'filled' : ''}"></div>
+            <div class="pin-dot ${pinLen >= 2 ? 'filled' : ''}"></div>
+            <div class="pin-dot ${pinLen >= 3 ? 'filled' : ''}"></div>
+            <div class="pin-dot ${pinLen >= 4 ? 'filled' : ''}"></div>
+          </div>
+
+          <div class="pin-keypad">
+            ${[1,2,3,4,5,6,7,8,9].map(num => `<button class="pin-key" onclick="App.pressPin('${num}')">${num}</button>`).join('')}
+            <button class="pin-key" style="font-size:14px; color:var(--text-tertiary);" onclick="App.pressPin('C')">C</button>
+            <button class="pin-key" onclick="App.pressPin('0')">0</button>
+            <button class="pin-key" style="font-size:16px;" onclick="App.pressPin('DEL')">⌫</button>
+          </div>
+
+          <div style="margin-top:24px; font-size:10px; color:var(--text-tertiary); letter-spacing:2.5px; text-transform:uppercase;">
+            ✦ Crafted Comfort · Crossed Threads ✦
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  pressPin(key) {
+    if (!this.state.pinInput) this.state.pinInput = '';
+    if (key === 'C') this.state.pinInput = '';
+    else if (key === 'DEL') this.state.pinInput = this.state.pinInput.slice(0, -1);
+    else if (typeof key === 'string' && key.length === 1 && key >= '0' && key <= '9') {
+      if (this.state.pinInput.length < 4) this.state.pinInput += key;
+    }
+
+    const dotsContainer = document.getElementById('pin-dots-container');
+    if (dotsContainer) {
+      const dots = dotsContainer.children;
+      for (let i = 0; i < 4; i++) {
+        if (i < this.state.pinInput.length) dots[i].classList.add('filled');
+        else dots[i].classList.remove('filled');
+      }
+    }
+
+    if (this.state.pinInput.length === 4) {
+      const sec = (Store.data && Store.data.security) || { pin: '1234' };
+      if (this.state.pinInput === (sec.pin || '1234')) {
+        sessionStorage.setItem('crossed_threads_unlocked', 'true');
+        this.state.pinInput = '';
+        toast('Unlocked');
+        this.render();
+      } else {
+        if (dotsContainer) {
+          dotsContainer.classList.add('shake');
+          setTimeout(() => dotsContainer.classList.remove('shake'), 400);
+        }
+        toast('Incorrect PIN');
+        this.state.pinInput = '';
+        setTimeout(() => {
+          if (dotsContainer) [...dotsContainer.children].forEach(d => d.classList.remove('filled'));
+        }, 300);
+      }
+    }
+  },
+
+  setupKeypadListener() {
+    window.addEventListener('keydown', (e) => {
+      if (!this.isLocked()) return;
+      if (e.key >= '0' && e.key <= '9') this.pressPin(e.key);
+      else if (e.key === 'Backspace') this.pressPin('DEL');
+      else if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') this.pressPin('C');
+    });
+  },
+
+  lockApp() {
+    sessionStorage.removeItem('crossed_threads_unlocked');
+    this.state.pinInput = '';
+    toast('App Locked');
+    this.renderLockScreen();
+  },
+
+  applyTheme() {
+    const theme = Store.data.theme || 'dark';
+    if (theme === 'auto') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  },
+
+  render() {
+    const app = document.getElementById('app');
+    let html = '';
+    switch (this.state.view) {
+      case 'home': html = this.renderHome(); break;
+      case 'invoices': html = this.renderInvoices(); break;
+      case 'invoice-detail': html = this.renderInvoiceDetail(); break;
+      case 'invoice-form': html = this.renderInvoiceForm(); break;
+      case 'customers': html = this.renderCustomers(); break;
+      case 'customer-detail': html = this.renderCustomerDetail(); break;
+      case 'customer-form': html = this.renderCustomerForm(); break;
+      case 'settings': html = this.renderSettings(); break;
+      case 'products': html = this.renderProducts(); break;
+      case 'expenses': html = this.renderExpenses(); break;
+      case 'record-payment': html = this.renderRecordPayment(); break;
+      default: html = this.renderHome();
+    }
+    app.innerHTML = html;
+  },
+
+  bottomNav(active) {
+    const items = [
+      { key: 'home', label: 'Home', icon: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>' },
+      { key: 'invoices', label: 'Invoices', icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>' },
+      { key: 'customers', label: 'Customers', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>' },
+      { key: 'settings', label: 'Settings', icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' }
+    ];
+    return `<div class="bottom-nav">
+      ${items.slice(0,2).map(it => `<button class="nav-item ${active===it.key?'active':''}" onclick="App.navigate('${it.key}')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${it.icon}</svg>
+        <span>${it.label}</span></button>`).join('')}
+      <button class="nav-fab" onclick="App.newDocument('invoice')" aria-label="New Invoice">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      ${items.slice(2).map(it => `<button class="nav-item ${active===it.key?'active':''}" onclick="App.navigate('${it.key}')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${it.icon}</svg>
+        <span>${it.label}</span></button>`).join('')}
+    </div>`;
+  },
+
+  emptyState(title, desc, btnLabel, btnAction, icon) {
+    icon = icon || '<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+    return `<div class="empty-state">${icon}<p style="font-weight:600;color:var(--text)">${title}</p><p>${desc}</p>${btnLabel?`<button class="btn btn-primary btn-sm" onclick="${btnAction}">${btnLabel}</button>`:''}</div>`;
+  },
+
+  // ==================== Home ====================
+  renderHome() {
+    const business = Store.data.business;
+    const invoices = Store.data.invoices;
+    let collected = 0, owed = 0;
+    invoices.forEach(inv => { collected += Number(inv.amountPaid) || 0; owed += Math.max(0, (Number(inv.total) - Number(inv.amountPaid))); });
+    const recent = [...invoices].sort((a,b) => b.createdAt - a.createdAt).slice(0, 5);
+    const logoHtml = business.logo
+      ? `<img src="${business.logo}" alt="logo">`
+      : crossedNeedlesSVG(22, '#fff');
+    return `<div class="page">
+      <div class="page-header">
+        <div class="topbar">
+          <div class="brand">
+            <div class="brand-logo">${logoHtml}</div>
+            <div style="min-width:0">
+              <div class="brand-name">${escapeHTML(business.name || 'Crossed Threads')}</div>
+              <div class="brand-sub">${escapeHTML(business.address || '')}</div>
+            </div>
+          </div>
+          <button class="icon-btn" onclick="App.navigate('settings')" aria-label="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2.5"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div style="text-align:center; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:12px; font-weight:600;">Automotive · Upholstery · Furniture</div>
+        <div class="stats-block">
+          <div class="stat-row">
+            <div>
+              <div class="stat-label">Collected</div>
+              <div class="stat-value success">${formatCurrency(collected)}</div>
+            </div>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="1.5" opacity="0.5"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="stat-row">
+            <div>
+              <div class="stat-label">Owed To You</div>
+              <div class="stat-value warning">${formatCurrency(owed)}</div>
+            </div>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="1.5" opacity="0.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+        </div>
+        <div class="action-grid">
+          <button class="action-card new-invoice" onclick="App.newDocument('invoice')">
+            <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            <div><div class="label">New Invoice</div><div class="desc">Create & send</div></div>
+          </button>
+          <button class="action-card new-quote" onclick="App.newDocument('quote')">
+            <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div><div class="label">New Quote</div><div class="desc">Estimate pricing</div></div>
+          </button>
+          <button class="action-card record-payment" onclick="App.navigate('record-payment')">
+            <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></div>
+            <div><div class="label">Record Payment</div><div class="desc">Log received money</div></div>
+          </button>
+          <button class="action-card my-invoices" onclick="App.navigate('invoices')">
+            <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg></div>
+            <div><div class="label">My Invoices</div><div class="desc">${invoices.length} total</div></div>
+          </button>
+        </div>
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Recent Activity</div>
+            ${invoices.length > 5 ? `<button class="section-link" onclick="App.navigate('invoices')">View all</button>` : ''}
+          </div>
+          ${recent.length === 0 ? this.emptyState('No invoices yet','Create your first invoice to get started','New Invoice',`App.newDocument('invoice')`) : recent.map(inv => this.invoiceCard(inv)).join('')}
+        </div>
+      </div>
+      ${this.bottomNav('home')}
+    </div>`;
+  },
+
+  invoiceCard(inv) {
+    const status = calculateStatus(inv);
+    return `<div class="card" onclick="App.navigate('invoice-detail', {id: '${inv.id}'})">
+      <div class="invoice-item">
+        <div class="invoice-item-info">
+          <div class="invoice-item-number">${escapeHTML(inv.number)} <span class="badge ${statusBadgeClass(status)}">${statusLabel(status)}</span></div>
+          <div class="invoice-item-meta">${escapeHTML(inv.customerName || 'Walk-in')}</div>
+          <div class="invoice-item-date">${formatDate(inv.date)}</div>
+        </div>
+        <div class="invoice-item-amount">${formatCurrency(inv.total)}</div>
+      </div>
+    </div>`;
+  },
+
+  // ==================== Invoices List ====================
+  renderInvoices() {
+    const tab = this.state.invoiceTab || 'invoices';
+    const filter = this.state.filter || 'all';
+    const search = (this.state.search || '').toLowerCase();
+    let docs = tab === 'invoices' ? Store.data.invoices : Store.data.quotes;
+
+    let filtered = docs.filter(d => {
+      const status = calculateStatus(d);
+      if (filter === 'all') {}
+      else if (filter === 'unpaid') { if (status !== 'sent' && status !== 'overdue') return false; }
+      else if (filter === 'partly') { if (status !== 'partly') return false; }
+      else if (filter === 'paid') { if (status !== 'paid') return false; }
+      else if (filter === 'overdue') { if (status !== 'overdue') return false; }
+      else if (filter === 'this-month') {
+        const dObj = new Date(d.date);
+        const now = new Date();
+        if (dObj.getMonth() !== now.getMonth() || dObj.getFullYear() !== now.getFullYear()) return false;
+      }
+      if (search) {
+        const text = (d.number + ' ' + (d.customerName || '') + ' ' + status).toLowerCase();
+        if (!text.includes(search)) return false;
+      }
+      return true;
+    });
+    filtered.sort((a,b) => b.createdAt - a.createdAt);
+
+    const filters = ['all','unpaid','partly','paid','overdue','this-month'];
+    const filterLabels = { all:'All', unpaid:'Not Paid', partly:'Partly Paid', paid:'Paid', overdue:'Overdue', 'this-month':'This Month' };
+
+    return `<div class="page">
+      <div class="page-header">
+        <h1 class="page-title">${tab === 'invoices' ? 'Invoices' : 'Quotes'}</h1>
+        <p class="page-subtitle">${filtered.length} ${filtered.length === 1 ? 'document' : 'documents'}</p>
+      </div>
+      <div class="page-body">
+        <div class="tabs">
+          <button class="tab ${tab==='invoices'?'active':''}" onclick="App.state.invoiceTab='invoices';App.state.filter='all';App.render()">Invoices</button>
+          <button class="tab ${tab==='quotes'?'active':''}" onclick="App.state.invoiceTab='quotes';App.state.filter='all';App.render()">Quotes</button>
+        </div>
+        <div class="search-bar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Search by number, customer, status..." value="${escapeHTML(this.state.search||'')}" oninput="App.state.search=this.value;App.renderInvoicesList()">
+        </div>
+        <div class="chips" id="filter-chips">
+          ${filters.map(f => `<button class="chip ${filter===f?'active':''}" onclick="App.state.filter='${f}';App.render()">${filterLabels[f]}</button>`).join('')}
+        </div>
+        <div id="invoices-list">
+          ${filtered.length === 0 ? this.emptyState('No documents found', search || filter !== 'all' ? 'Try adjusting your filters' : `Create your first ${tab === 'invoices' ? 'invoice' : 'quote'}`, 'Create New', `App.newDocument('${tab === 'invoices' ? 'invoice' : 'quote'}')`) : filtered.map(d => this.invoiceCard(d)).join('')}
+        </div>
+      </div>
+      ${this.bottomNav('invoices')}
+    </div>`;
+  },
+
+  renderInvoicesList() {
+    const tab = this.state.invoiceTab || 'invoices';
+    const filter = this.state.filter || 'all';
+    const search = (this.state.search || '').toLowerCase();
+    let docs = tab === 'invoices' ? Store.data.invoices : Store.data.quotes;
+    let filtered = docs.filter(d => {
+      const status = calculateStatus(d);
+      if (filter === 'all') {}
+      else if (filter === 'unpaid') { if (status !== 'sent' && status !== 'overdue') return false; }
+      else if (filter === 'partly') { if (status !== 'partly') return false; }
+      else if (filter === 'paid') { if (status !== 'paid') return false; }
+      else if (filter === 'overdue') { if (status !== 'overdue') return false; }
+      else if (filter === 'this-month') {
+        const d2 = new Date(d.date);
+        const now = new Date();
+        if (d2.getMonth() !== now.getMonth() || d2.getFullYear() !== now.getFullYear()) return false;
+      }
+      if (search) {
+        const text = (d.number + ' ' + (d.customerName || '') + ' ' + status).toLowerCase();
+        if (!text.includes(search)) return false;
+      }
+      return true;
+    });
+    filtered.sort((a,b) => b.createdAt - a.createdAt);
+    const listEl = document.getElementById('invoices-list');
+    if (listEl) {
+      listEl.innerHTML = filtered.length === 0 ? this.emptyState('No documents found', search || filter !== 'all' ? 'Try adjusting your filters' : `Create your first ${tab === 'invoices' ? 'invoice' : 'quote'}`, 'Create New', `App.newDocument('${tab === 'invoices' ? 'invoice' : 'quote'}')`) : filtered.map(d => this.invoiceCard(d)).join('');
+    }
+  },
+
+  // ==================== Invoice Detail View ====================
+  renderInvoiceDetail() {
+    const id = this.state.params.id;
+    const doc = [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === id);
+    if (!doc) return `<div class="page"><div class="page-body">${this.emptyState('Not found','Document not found','Go Back','App.navigate(\'invoices\')')}</div></div>`;
+    const status = calculateStatus(doc);
+    const isQuote = doc.type === 'quote';
+    const business = Store.data.business;
+
+    return `<div class="page">
+      <div class="page-header">
+        <div class="topbar">
+          <button class="back-btn" onclick="App.navigate('invoices')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <button class="icon-btn" onclick="App.confirmDeleteDoc('${doc.id}')" aria-label="Delete">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="detail-header">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px">
+            <div>
+              <div style="font-size:18px; font-weight:700">${escapeHTML(doc.number)}</div>
+              <div style="font-size:13px; color:var(--text-secondary)">${escapeHTML(doc.customerName || 'Walk-in customer')}</div>
+            </div>
+            <span class="badge ${statusBadgeClass(status)} ${isQuote?'badge-quote':''}">${isQuote ? 'QUOTE' : statusLabel(status)}</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:8px">
+            Issued: ${formatDate(doc.date)}${doc.dueDate ? ` · Due: ${formatDate(doc.dueDate)}` : ''}
+          </div>
+        </div>
+
+        <div class="detail-summary-row">
+          <div class="detail-summary">
+            <div class="detail-summary-value">${formatCurrency(doc.total)}</div>
+            <div class="detail-summary-label">Total</div>
+          </div>
+          <div class="detail-summary">
+            <div class="detail-summary-value success">${formatCurrency(doc.amountPaid)}</div>
+            <div class="detail-summary-label">Paid</div>
+          </div>
+        </div>
+        ${!isQuote ? `<div class="detail-summary" style="margin-top:0">
+          <div class="detail-summary-value warning">${formatCurrency(doc.balance)}</div>
+          <div class="detail-summary-label">Balance Due</div>
+        </div>` : ''}
+
+        <div class="detail-actions" style="grid-template-columns:1fr 1fr; gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="App.printInvoice('${doc.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="App.downloadInvoicePDF('${doc.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download PDF
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="App.shareWhatsApp('${doc.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            WhatsApp
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="App.shareEmail('${doc.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email
+          </button>
+        </div>
+        <div class="detail-actions" style="grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="App.navigate('invoice-form', {id: '${doc.id}'})">Edit</button>
+          <button class="btn btn-secondary btn-sm" onclick="App.duplicateDocument('${doc.id}')">Duplicate</button>
+          ${!isQuote ? `<button class="btn btn-secondary btn-sm" onclick="App.printReceipt('${doc.id}')">Receipt</button>` : `<button class="btn btn-primary btn-sm" onclick="App.convertQuoteToInvoice('${doc.id}')">To Invoice</button>`}
+        </div>
+
+        ${!isQuote && status !== 'paid' && status !== 'cancelled' ? `
+          <button class="btn btn-success btn-block mb-8 mt-8" onclick="App.openPaymentModal('${doc.id}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Record Payment
+          </button>
+        ` : ''}
+        ${!isQuote && status !== 'cancelled' ? `
+          <button class="btn btn-danger btn-block btn-sm mb-16" onclick="App.cancelInvoice('${doc.id}')">Cancel Invoice</button>
+        ` : ''}
+
+        <div class="section">
+          <div class="section-head"><div class="section-title">Items</div></div>
+          <div class="card" style="padding:14px 16px">
+            ${doc.items.map((item, i) => `
+              <div style="display:flex; justify-content:space-between; padding:8px 0; ${i>0?'border-top:1px solid var(--border-light);':''}">
+                <div style="flex:1">
+                  <div style="font-weight:600; font-size:14px">${escapeHTML(item.description)}</div>
+                  <div style="font-size:12px; color:var(--text-secondary); margin-top:2px">${item.qty} × ${formatCurrency(item.price)}</div>
+                </div>
+                <div style="font-weight:600; text-align:right">${formatCurrency(item.total)}</div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="totals">
+            <div class="total-row"><span>Subtotal</span><span>${formatCurrency(doc.subtotal)}</span></div>
+            ${doc.tax > 0 ? `<div class="total-row"><span>Tax (${doc.taxRate}%)</span><span>${formatCurrency(doc.tax)}</span></div>` : ''}
+            <div class="total-row grand"><span>Total</span><span>${formatCurrency(doc.total)}</span></div>
+            ${!isQuote && doc.amountPaid > 0 ? `<div class="total-row paid"><span>Paid</span><span>- ${formatCurrency(doc.amountPaid)}</span></div>` : ''}
+            ${!isQuote && doc.balance > 0 ? `<div class="total-row balance"><span>Balance Due</span><span>${formatCurrency(doc.balance)}</span></div>` : ''}
+          </div>
+        </div>
+
+        ${business.paymentDetails ? `
+          <div class="section">
+            <div class="section-head"><div class="section-title">Payment Details</div></div>
+            <div class="card" style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+              <div style="flex:1; min-width:180px; font-size:13px; color:var(--text-secondary); line-height:1.6; white-space:pre-wrap;">${escapeHTML(business.paymentDetails)}</div>
+              <div style="flex-shrink:0;">${renderStampSVG(doc.date)}</div>
+            </div>
+          </div>
+        ` : `
+          <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">${renderStampSVG(doc.date)}</div>
+        `}
+
+        ${!isQuote && doc.payments && doc.payments.length > 0 ? `
+          <div class="section">
+            <div class="section-head"><div class="section-title">Payment History</div></div>
+            <div class="payment-history">
+              ${doc.payments.map(p => `
+                <div class="payment-row">
+                  <div>
+                    <div style="font-weight:600; font-size:14px">${formatCurrency(p.amount)}</div>
+                    <div style="font-size:11px; color:var(--text-secondary)">${formatDate(p.date)} · ${escapeHTML(p.method||'Payment')}${p.note?` · ${escapeHTML(p.note)}`:''}</div>
+                  </div>
+                  <button class="icon-btn" style="width:32px; height:32px" onclick="App.deletePayment('${doc.id}', ${doc.payments.indexOf(p)})">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${doc.notes ? `<div class="section"><div class="section-head"><div class="section-title">Notes</div></div><div class="card" style="padding:14px 16px"><p style="margin:0; font-size:13px; color:var(--text-secondary); white-space:pre-wrap">${escapeHTML(doc.notes)}</p></div></div>` : ''}
+      </div>
+      ${this.bottomNav('invoices')}
+    </div>`;
+  },
+
+  // ==================== Invoice Form ====================
+  renderInvoiceForm() {
+    const id = this.state.params.id;
+    const isEdit = !!id;
+    const doc = isEdit ? [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === id) : null;
+    const isQuote = doc ? doc.type === 'quote' : (this.state.params.type === 'quote');
+    const business = Store.data.business;
+
+    const prefix = isQuote ? business.quotePrefix : business.invoicePrefix;
+    const nextNo = isQuote ? business.nextQuoteNo : business.nextInvoiceNo;
+    const number = doc ? doc.number : `${prefix}${String(nextNo).padStart(4, '0')}`;
+
+    const today = doc ? doc.date : todayStr();
+    const dueDate = doc ? doc.dueDate : new Date(Date.now() + 14*86400000).toISOString().slice(0,10);
+
+    const customer = doc ? { id: doc.customerId, name: doc.customerName, phone: doc.customerPhone, email: doc.customerEmail, address: doc.customerAddress } : null;
+    const items = doc ? doc.items : [{ description: '', qty: 1, price: 0, total: 0 }];
+    const taxRate = doc ? doc.taxRate : business.defaultTax;
+    const notes = doc ? doc.notes : '';
+
+    return `<div class="page">
+      <div class="page-header">
+        <div class="topbar">
+          <button class="back-btn" onclick="App.navigate('${isEdit ? 'invoice-detail' : 'invoices'}', ${isEdit ? `{id:'${id}'}` : `{}`})">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            ${isEdit ? 'Cancel' : 'Back'}
+          </button>
+          <h1 style="font-size:17px; font-weight:700; margin:0">${isEdit ? 'Edit' : 'New'} ${isQuote ? 'Quote' : 'Invoice'}</h1>
+          <button class="btn btn-primary btn-sm" onclick="App.saveDocument('${isQuote ? 'quote' : 'invoice'}', ${isEdit ? `'${id}'` : 'null'})">Save</button>
+        </div>
+      </div>
+      <div class="page-body" style="padding-bottom:100px">
+        <div class="form-group">
+          <label class="form-label">Customer</label>
+          <select class="form-select" id="customer-select" onchange="App.onCustomerChange()">
+            <option value="">— Select customer —</option>
+            <option value="new">+ Add new customer</option>
+            ${Store.data.customers.map(c => `<option value="${c.id}" ${customer && customer.id === c.id ? 'selected' : ''}>${escapeHTML(c.name)}${c.phone ? ' — ' + escapeHTML(c.phone) : ''}</option>`).join('')}
+          </select>
+        </div>
+
+        <div id="new-customer-fields" style="display:none">
+          <div class="form-group">
+            <input type="text" class="form-input" id="new-customer-name" placeholder="Customer name">
+          </div>
+          <div class="form-row">
+            <input type="tel" class="form-input" id="new-customer-phone" placeholder="Phone">
+            <input type="email" class="form-input" id="new-customer-email" placeholder="Email">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Vehicle / Project Reference</label>
+          <div class="form-row">
+            <input type="text" class="form-input" id="veh-make" placeholder="Make / Project (e.g. Toyota)" value="${escapeHTML(doc ? (doc.vehicleMake||'') : '')}">
+            <input type="text" class="form-input" id="veh-model" placeholder="Model / Type (e.g. Land Cruiser)" value="${escapeHTML(doc ? (doc.vehicleModel||'') : '')}">
+          </div>
+          <input type="text" class="form-input" id="veh-reg" placeholder="Registration / Ref (e.g. UBA 123X)" style="margin-top:8px; text-transform:uppercase" value="${escapeHTML(doc ? (doc.vehicleReg||'') : '')}">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Document #</label>
+            <input type="text" class="form-input" id="doc-number" value="${escapeHTML(number)}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" id="doc-date" value="${today}">
+          </div>
+        </div>
+
+        ${!isQuote ? `<div class="form-group">
+          <label class="form-label">Due Date</label>
+          <input type="date" class="form-input" id="doc-due-date" value="${dueDate}">
+        </div>` : ''}
+
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Items</div>
+            <button class="section-link" onclick="App.addItemRow()">+ Add item</button>
+          </div>
+          <div class="items-table">
+            <div class="items-table-head">
+              <div>Description</div><div>Qty</div><div>Price</div><div>Total</div><div></div>
+            </div>
+            <div id="items-list">
+              ${items.map((item, i) => this.itemRow(item, i)).join('')}
+            </div>
+          </div>
+          <div class="totals">
+            <div class="total-row"><span>Subtotal</span><span id="subtotal-display">${formatCurrency(0)}</span></div>
+            <div class="total-row">
+              <span>Tax (<input type="number" id="tax-rate" value="${taxRate}" style="width:50px; background:transparent; border:1px solid var(--border); border-radius:6px; padding:2px 6px; color:var(--text); text-align:center" oninput="App.recalcTotals()">%)</span>
+              <span id="tax-display">${formatCurrency(0)}</span>
+            </div>
+            <div class="total-row grand"><span>Total</span><span id="total-display">${formatCurrency(0)}</span></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes (optional)</label>
+          <textarea class="form-textarea" id="doc-notes" placeholder="Additional notes for customer...">${escapeHTML(notes)}</textarea>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  itemRow(item, i) {
+    return `<div class="items-table-row" data-item-index="${i}">
+      <div class="item-desc-wrap">
+        <input type="text" class="item-input item-desc" placeholder="Description (type to search catalogue)" value="${escapeHTML(item.description||'')}"
+          oninput="App.onDescInput(${i}, this)" onfocus="App.onDescInput(${i}, this)" onblur="setTimeout(()=>App.hideSuggestions(${i}),180)" autocomplete="off">
+        <div class="item-suggestions" id="sugg-${i}"></div>
+      </div>
+      <input type="number" class="item-input num" placeholder="1" value="${item.qty||1}" oninput="App.recalcRow(${i})" min="0" step="any">
+      <input type="number" class="item-input num item-price" placeholder="0" value="${item.price||0}" oninput="App.recalcRow(${i})" min="0" step="any">
+      <div class="item-total" id="item-total-${i}">${formatCurrency((item.qty||0)*(item.price||0))}</div>
+      <button class="item-remove" onclick="App.removeItemRow(${i})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+  },
+
+  onDescInput(i, inputEl) {
+    this.recalcRow(i);
+    const q = (inputEl.value || '').trim().toLowerCase();
+    const box = document.getElementById('sugg-' + i);
+    if (!box) return;
+    if (q.length < 1) { box.classList.remove('open'); box.innerHTML = ''; return; }
+    const products = (Store.data.products || []).filter(p => !p.archived);
+    const matches = products.filter(p =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.description || '').toLowerCase().includes(q) ||
+      (p.category || '').toLowerCase().includes(q)
+    ).slice(0, 8);
+    if (matches.length === 0) { box.classList.remove('open'); box.innerHTML = ''; return; }
+    box.innerHTML = matches.map(p => `
+      <div class="item-suggestion" onmousedown="App.applyProductSuggestion(${i}, '${escapeHTML(p.id)}')">
+        <span class="sugg-name">${escapeHTML(p.name)}</span>
+        <span class="sugg-price">${formatCurrency(p.price)}</span>
+      </div>
+    `).join('');
+    box.classList.add('open');
+  },
+
+  applyProductSuggestion(i, productId) {
+    const p = (Store.data.products || []).find(x => x.id === productId);
+    if (!p) return;
+    const row = document.querySelector(`[data-item-index="${i}"]`);
+    if (!row) return;
+    const descInput = row.querySelector('.item-desc');
+    const priceInput = row.querySelector('.item-price');
+    if (descInput) descInput.value = p.name;
+    if (priceInput) priceInput.value = p.price;
+    this.hideSuggestions(i);
+    this.recalcRow(i);
+    toast('Catalogue item applied');
+  },
+
+  hideSuggestions(i) {
+    const box = document.getElementById('sugg-' + i);
+    if (box) { box.classList.remove('open'); box.innerHTML = ''; }
+  },
+
+  onCustomerChange() {
+    const sel = document.getElementById('customer-select');
+    const fields = document.getElementById('new-customer-fields');
+    if (sel.value === 'new') fields.style.display = 'block';
+    else fields.style.display = 'none';
+  },
+
+  addItemRow() {
+    const list = document.getElementById('items-list');
+    const i = list.children.length;
+    list.insertAdjacentHTML('beforeend', this.itemRow({ description: '', qty: 1, price: 0, total: 0 }, i));
+  },
+
+  removeItemRow(i) {
+    const list = document.getElementById('items-list');
+    if (list.children.length <= 1) { toast('At least one item is required'); return; }
+    list.children[i].remove();
+    [...list.children].forEach((row, idx) => {
+      row.setAttribute('data-item-index', idx);
+      const desc = row.querySelector('.item-desc');
+      if (desc) {
+        desc.setAttribute('oninput', `App.onDescInput(${idx}, this)`);
+        desc.setAttribute('onfocus', `App.onDescInput(${idx}, this)`);
+        desc.setAttribute('onblur', `setTimeout(()=>App.hideSuggestions(${idx}),180)`);
+      }
+      row.querySelectorAll('input.num').forEach(inp => inp.setAttribute('oninput', `App.recalcRow(${idx})`));
+      const totalEl = row.querySelector('.item-total');
+      if (totalEl) totalEl.id = `item-total-${idx}`;
+      const sugg = row.querySelector('.item-suggestions');
+      if (sugg) sugg.id = `sugg-${idx}`;
+      row.querySelector('.item-remove').setAttribute('onclick', `App.removeItemRow(${idx})`);
+    });
+    this.recalcTotals();
+  },
+
+  recalcRow(i) {
+    const row = document.querySelector(`[data-item-index="${i}"]`);
+    if (!row) return;
+    const qtyInput = row.querySelectorAll('input.num')[0];
+    const priceInput = row.querySelectorAll('input.num')[1];
+    const qty = parseFloat(qtyInput && qtyInput.value) || 0;
+    const price = parseFloat(priceInput && priceInput.value) || 0;
+    const totalEl = document.getElementById(`item-total-${i}`);
+    if (totalEl) totalEl.textContent = formatCurrency(qty * price);
+    this.recalcTotals();
+  },
+
+  recalcTotals() {
+    const rows = document.querySelectorAll('#items-list .items-table-row');
+    let subtotal = 0;
+    rows.forEach(row => {
+      const nums = row.querySelectorAll('input.num');
+      const qty = parseFloat(nums[0] && nums[0].value) || 0;
+      const price = parseFloat(nums[1] && nums[1].value) || 0;
+      subtotal += qty * price;
+    });
+    const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
+    const tax = subtotal * taxRate / 100;
+    document.getElementById('subtotal-display').textContent = formatCurrency(subtotal);
+    document.getElementById('tax-display').textContent = formatCurrency(tax);
+    document.getElementById('total-display').textContent = formatCurrency(subtotal + tax);
+  },
+
+  saveDocument(type, editId) {
+    const isQuote = type === 'quote';
+    const customerSelect = document.getElementById('customer-select');
+    let customerId = '', customerName = '', customerPhone = '', customerEmail = '', customerAddress = '';
+
+    if (customerSelect.value === 'new') {
+      customerName = document.getElementById('new-customer-name').value.trim();
+      if (!customerName) { toast('Please enter customer name'); return; }
+      customerPhone = document.getElementById('new-customer-phone').value.trim();
+      customerEmail = document.getElementById('new-customer-email').value.trim();
+      const newCustomer = { id: uid(), name: customerName, phone: customerPhone, email: customerEmail, address: '', createdAt: Date.now() };
+      Store.data.customers.push(newCustomer);
+      customerId = newCustomer.id;
+    } else if (customerSelect.value) {
+      customerId = customerSelect.value;
+      const c = Store.data.customers.find(c => c.id === customerId);
+      if (c) { customerName = c.name; customerPhone = c.phone || ''; customerEmail = c.email || ''; customerAddress = c.address || ''; }
+    } else {
+      customerName = 'Walk-in customer';
+    }
+
+    const vehicleMake = document.getElementById('veh-make').value.trim();
+    const vehicleModel = document.getElementById('veh-model').value.trim();
+    const vehicleReg = document.getElementById('veh-reg').value.trim().toUpperCase();
+    const number = document.getElementById('doc-number').value.trim();
+    const date = document.getElementById('doc-date').value;
+    const dueDateEl = document.getElementById('doc-due-date');
+    const dueDate = dueDateEl ? dueDateEl.value : '';
+    const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
+    const notes = document.getElementById('doc-notes').value.trim();
+
+    const rows = document.querySelectorAll('#items-list .items-table-row');
+    const items = [];
+    let subtotal = 0;
+    rows.forEach(row => {
+      const descInput = row.querySelector('.item-desc');
+      const nums = row.querySelectorAll('input.num');
+      const description = (descInput && descInput.value || '').trim();
+      const qty = parseFloat(nums[0] && nums[0].value) || 0;
+      const price = parseFloat(nums[1] && nums[1].value) || 0;
+      if (description || qty || price) {
+        const total = qty * price;
+        items.push({ description, qty, price, total });
+        subtotal += total;
+      }
+    });
+    if (items.length === 0) { toast('Please add at least one item'); return; }
+
+    const tax = subtotal * taxRate / 100;
+    const total = subtotal + tax;
+
+    if (editId) {
+      const list = isQuote ? Store.data.quotes : Store.data.invoices;
+      const idx = list.findIndex(d => d.id === editId);
+      if (idx >= 0) {
+        const existing = list[idx];
+        list[idx] = { ...existing, number, customerId, customerName, customerPhone, customerEmail, customerAddress, vehicleMake, vehicleModel, vehicleReg, date, dueDate, items, taxRate, subtotal, tax, total, notes, balance: total - existing.amountPaid };
+        Store.save();
+        toast(isQuote ? 'Quote updated' : 'Invoice updated');
+        this.navigate('invoice-detail', { id: editId });
+      }
+    } else {
+      const newDoc = {
+        id: uid(), number, type: isQuote ? 'quote' : 'invoice',
+        customerId, customerName, customerPhone, customerEmail, customerAddress,
+        vehicleMake, vehicleModel, vehicleReg,
+        date, dueDate, items, taxRate, subtotal, tax, total,
+        amountPaid: 0, balance: total, status: isQuote ? 'draft' : 'sent',
+        notes, payments: [], createdAt: Date.now()
+      };
+      if (isQuote) {
+        Store.data.quotes.push(newDoc);
+        Store.data.business.nextQuoteNo = Store.data.business.nextQuoteNo + 1;
+      } else {
+        Store.data.invoices.push(newDoc);
+        Store.data.business.nextInvoiceNo = Store.data.business.nextInvoiceNo + 1;
+      }
+      Store.save();
+      toast(isQuote ? 'Quote created' : 'Invoice created');
+      this.navigate('invoice-detail', { id: newDoc.id });
+    }
+  },
+
+  newDocument(type) {
+    this.state.params = { type };
+    this.state.view = 'invoice-form';
+    history.pushState({ view: this.state.view, params: this.state.params }, '', '#new-' + type);
+    this.render();
+  },
+
+  // ==================== Customers ====================
+  renderCustomers() {
+    const search = (this.state.search || '').toLowerCase();
+    let customers = Store.data.customers;
+    if (search) customers = customers.filter(c => (c.name + ' ' + (c.phone||'') + ' ' + (c.email||'')).toLowerCase().includes(search));
+    customers = [...customers].sort((a,b) => a.name.localeCompare(b.name));
+
+    return `<div class="page">
+      <div class="page-header">
+        <h1 class="page-title">Customers</h1>
+        <p class="page-subtitle">${customers.length} customers</p>
+      </div>
+      <div class="page-body">
+        <div class="search-bar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Search customers..." oninput="App.state.search=this.value;App.renderCustomersList()">
+        </div>
+        <button class="btn btn-primary btn-block mb-16" onclick="App.navigate('customer-form')">+ Add Customer</button>
+        <div id="customers-list">
+          ${customers.length === 0 ? this.emptyState('No customers yet', 'Add customers to track their invoices', 'Add Customer', 'App.navigate(\'customer-form\')') :
+            customers.map(c => this.customerCard(c)).join('')}
+        </div>
+      </div>
+      ${this.bottomNav('customers')}
+    </div>`;
+  },
+
+  renderCustomersList() {
+    const search = (this.state.search || '').toLowerCase();
+    let customers = Store.data.customers;
+    if (search) customers = customers.filter(c => (c.name + ' ' + (c.phone||'') + ' ' + (c.email||'')).toLowerCase().includes(search));
+    customers = [...customers].sort((a,b) => a.name.localeCompare(b.name));
+    const el = document.getElementById('customers-list');
+    if (el) el.innerHTML = customers.length === 0 ? this.emptyState('No customers yet', 'Add customers to track their invoices', 'Add Customer', 'App.navigate(\'customer-form\')') : customers.map(c => this.customerCard(c)).join('');
+  },
+
+  customerCard(c) {
+    const invoices = Store.data.invoices.filter(i => i.customerId === c.id);
+    const balance = invoices.reduce((s,i) => s + Math.max(0, (Number(i.total)||0) - (Number(i.amountPaid)||0)), 0);
+    return `<div class="card" onclick="App.navigate('customer-detail', {id: '${c.id}'})">
+      <div class="list-item">
+        <div class="customer-avatar">${escapeHTML((c.name||'?').charAt(0).toUpperCase())}</div>
+        <div class="list-item-info">
+          <div class="list-item-title">${escapeHTML(c.name)}</div>
+          <div class="list-item-sub">${c.phone ? escapeHTML(c.phone) : 'No phone'} · ${invoices.length} invoice${invoices.length!==1?'s':''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700; font-size:13px">${formatCurrency(balance)}</div>
+          <div style="font-size:11px; color:var(--text-tertiary)">owed</div>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  renderCustomerDetail() {
+    const id = this.state.params.id;
+    const c = Store.data.customers.find(c => c.id === id);
+    if (!c) return `<div class="page"><div class="page-body">${this.emptyState('Not found','Customer not found','Go Back','App.navigate(\'customers\')')}</div></div>`;
+    const invoices = Store.data.invoices.filter(i => i.customerId === c.id).sort((a,b) => b.createdAt - a.createdAt);
+    const quotes = Store.data.quotes.filter(q => q.customerId === c.id).sort((a,b) => b.createdAt - a.createdAt);
+    const totalSpent = invoices.reduce((s,i) => s + (Number(i.total)||0), 0);
+    const balance = invoices.reduce((s,i) => s + Math.max(0, (Number(i.total)||0) - (Number(i.amountPaid)||0)), 0);
+    const collected = invoices.reduce((s,i) => s + (Number(i.amountPaid)||0), 0);
+
+    return `<div class="page">
+      <div class="page-header">
+        <div class="topbar">
+          <button class="back-btn" onclick="App.navigate('customers')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <button class="icon-btn" onclick="App.navigate('customer-form', {id: '${c.id}'})">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="detail-header" style="text-align:center; padding:24px 16px">
+          <div class="customer-avatar" style="width:64px; height:64px; font-size:24px; margin:0 auto 12px">${escapeHTML((c.name||'?').charAt(0).toUpperCase())}</div>
+          <div style="font-size:20px; font-weight:700">${escapeHTML(c.name)}</div>
+          ${c.phone ? `<div style="font-size:13px; color:var(--text-secondary); margin-top:4px">${escapeHTML(c.phone)}</div>` : ''}
+          ${c.email ? `<div style="font-size:12px; color:var(--text-tertiary); margin-top:2px">${escapeHTML(c.email)}</div>` : ''}
+          ${c.address ? `<div style="font-size:12px; color:var(--text-tertiary); margin-top:2px">${escapeHTML(c.address)}</div>` : ''}
+        </div>
+
+        <div class="detail-summary-row">
+          <div class="detail-summary">
+            <div class="detail-summary-value">${formatCurrency(totalSpent)}</div>
+            <div class="detail-summary-label">Total Billed</div>
+          </div>
+          <div class="detail-summary">
+            <div class="detail-summary-value success">${formatCurrency(collected)}</div>
+            <div class="detail-summary-label">Collected</div>
+          </div>
+        </div>
+        <div class="detail-summary" style="margin-top:0; margin-bottom:16px">
+          <div class="detail-summary-value warning">${formatCurrency(balance)}</div>
+          <div class="detail-summary-label">Outstanding Balance</div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="btn btn-primary btn-sm" onclick="App.newDocumentForCustomer('${c.id}', 'invoice')">New Invoice</button>
+          <button class="btn btn-secondary btn-sm" onclick="App.newDocumentForCustomer('${c.id}', 'quote')">New Quote</button>
+        </div>
+
+        <div class="section">
+          <div class="section-head"><div class="section-title">Invoices (${invoices.length})</div></div>
+          ${invoices.length === 0 ? `<p style="color:var(--text-secondary); font-size:13px; padding:14px 0">No invoices yet</p>` : invoices.map(inv => this.invoiceCard(inv)).join('')}
+        </div>
+
+        ${quotes.length > 0 ? `<div class="section">
+          <div class="section-head"><div class="section-title">Quotes (${quotes.length})</div></div>
+          ${quotes.map(q => this.invoiceCard(q)).join('')}
+        </div>` : ''}
+      </div>
+      ${this.bottomNav('customers')}
+    </div>`;
+  },
+
+  newDocumentForCustomer(customerId, type) {
+    this.state.params = { type, customerId };
+    this.state.view = 'invoice-form';
+    history.pushState({ view: this.state.view, params: this.state.params }, '', '#new-' + type);
+    this.render();
+    setTimeout(() => {
+      const sel = document.getElementById('customer-select');
+      if (sel) sel.value = customerId;
+    }, 50);
+  },
+
+  renderCustomerForm() {
+    const id = this.state.params.id;
+    const c = id ? Store.data.customers.find(c => c.id === id) : null;
+    return `<div class="page">
+      <div class="page-header">
+        <div class="topbar">
+          <button class="back-btn" onclick="App.navigate('${c ? 'customer-detail' : 'customers'}', ${c ? `{id:'${c.id}'}` : `{}`})">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            ${c ? 'Cancel' : 'Back'}
+          </button>
+          <h1 style="font-size:17px; font-weight:700; margin:0">${c ? 'Edit' : 'New'} Customer</h1>
+          <button class="btn btn-primary btn-sm" onclick="App.saveCustomer(${c ? `'${c.id}'` : 'null'})">Save</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" id="cust-name" value="${c ? escapeHTML(c.name) : ''}" placeholder="Customer or company name">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="tel" class="form-input" id="cust-phone" value="${c ? escapeHTML(c.phone||'') : ''}" placeholder="+256...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="cust-email" value="${c ? escapeHTML(c.email||'') : ''}" placeholder="email@example.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <textarea class="form-textarea" id="cust-address" placeholder="Optional address">${c ? escapeHTML(c.address||'') : ''}</textarea>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  saveCustomer(id) {
+    const name = document.getElementById('cust-name').value.trim();
+    if (!name) { toast('Name is required'); return; }
+    const phone = document.getElementById('cust-phone').value.trim();
+    const email = document.getElementById('cust-email').value.trim();
+    const address = document.getElementById('cust-address').value.trim();
+
+    if (id) {
+      const c = Store.data.customers.find(c => c.id === id);
+      if (c) {
+        c.name = name; c.phone = phone; c.email = email; c.address = address;
+        Store.data.invoices.forEach(inv => {
+          if (inv.customerId === id) { inv.customerName = name; inv.customerPhone = phone; inv.customerEmail = email; inv.customerAddress = address; }
+        });
+        Store.data.quotes.forEach(q => {
+          if (q.customerId === id) { q.customerName = name; q.customerPhone = phone; q.customerEmail = email; q.customerAddress = address; }
+        });
+        Store.save();
+        toast('Customer updated');
+        this.navigate('customer-detail', { id });
+      }
+    } else {
+      const newC = { id: uid(), name, phone, email, address, createdAt: Date.now() };
+      Store.data.customers.push(newC);
+      Store.save();
+      toast('Customer added');
+      this.navigate('customer-detail', { id: newC.id });
+    }
+  },
+
+  // ==================== Payment ====================
+  renderRecordPayment() {
+    const unpaidInvoices = Store.data.invoices.filter(i => (Number(i.amountPaid)||0) < (Number(i.total)||0));
+    return `<div class="page">
+      <div class="page-header">
+        <div class="topbar">
+          <button class="back-btn" onclick="App.navigate('home')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <h1 style="font-size:17px; font-weight:700; margin:0">Record Payment</h1>
+          <div style="width:60px"></div>
+        </div>
+      </div>
+      <div class="page-body">
+        ${unpaidInvoices.length === 0 ? this.emptyState('All paid up!', 'No outstanding invoices to record payments for', null, null) :
+          unpaidInvoices.sort((a,b) => a.createdAt - b.createdAt).map(inv => {
+            const status = calculateStatus(inv);
+            return `<div class="card" onclick="App.openPaymentModal('${inv.id}')">
+              <div class="invoice-item">
+                <div class="invoice-item-info">
+                  <div class="invoice-item-number">${escapeHTML(inv.number)} <span class="badge ${statusBadgeClass(status)}">${statusLabel(status)}</span></div>
+                  <div class="invoice-item-meta">${escapeHTML(inv.customerName||'Walk-in')}</div>
+                  <div class="invoice-item-date">Balance: ${formatCurrency(inv.balance)}</div>
+                </div>
+                <div class="invoice-item-amount">${formatCurrency(inv.total)}</div>
+              </div>
+            </div>`;
+          }).join('')}
+      </div>
+      ${this.bottomNav('home')}
+    </div>`;
+  },
+
+  openPaymentModal(docId) {
+    const doc = Store.data.invoices.find(i => i.id === docId);
+    if (!doc) return;
+    const balance = doc.total - doc.amountPaid;
+    const today = todayStr();
+    showModal(`
+      <h3 class="modal-title">Record Payment</h3>
+      <div class="card" style="padding:14px 16px; margin-bottom:14px">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px">
+          <span style="color:var(--text-secondary); font-size:12px">Invoice</span>
+          <span style="font-weight:600">${escapeHTML(doc.number)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px">
+          <span style="color:var(--text-secondary); font-size:12px">Customer</span>
+          <span style="font-weight:600">${escapeHTML(doc.customerName||'Walk-in')}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px">
+          <span style="color:var(--text-secondary); font-size:12px">Total</span>
+          <span style="font-weight:600">${formatCurrency(doc.total)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between">
+          <span style="color:var(--text-secondary); font-size:12px">Balance</span>
+          <span style="font-weight:700; color:var(--warning)">${formatCurrency(balance)}</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount</label>
+        <input type="number" class="form-input" id="pay-amount" value="${balance}" max="${balance}" min="0" step="any">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="pay-date" value="${today}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Method</label>
+          <select class="form-select" id="pay-method">
+            <option>Cash</option><option>MTN MoMo</option><option>Airtel Money</option><option>Bank Transfer</option><option>Cheque</option><option>Card</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note (optional)</label>
+        <input type="text" class="form-input" id="pay-note" placeholder="Reference or note">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-success" style="flex:1" onclick="App.savePayment('${docId}')">Save Payment</button>
+      </div>
+    `);
+  },
+
+  savePayment(docId) {
+    const doc = Store.data.invoices.find(i => i.id === docId);
+    if (!doc) return;
+    const amount = parseFloat(document.getElementById('pay-amount').value) || 0;
+    if (amount <= 0) { toast('Enter a valid amount'); return; }
+    const date = document.getElementById('pay-date').value;
+    const method = document.getElementById('pay-method').value;
+    const note = document.getElementById('pay-note').value.trim();
+
+    if (!doc.payments) doc.payments = [];
+    doc.payments.push({ amount, date, method, note });
+    doc.amountPaid = (Number(doc.amountPaid) || 0) + amount;
+    doc.balance = Math.max(0, doc.total - doc.amountPaid);
+    doc.status = calculateStatus(doc);
+    Store.save();
+    closeModal();
+    toast('Payment recorded');
+    this.navigate('invoice-detail', { id: docId });
+  },
+
+  deletePayment(docId, idx) {
+    const doc = Store.data.invoices.find(i => i.id === docId);
+    if (!doc || !doc.payments || !doc.payments[idx]) return;
+    confirmDialog('Delete Payment', 'Remove this payment record? This cannot be undone.', () => {
+      const p = doc.payments[idx];
+      doc.amountPaid = Math.max(0, (Number(doc.amountPaid)||0) - p.amount);
+      doc.balance = Math.max(0, doc.total - doc.amountPaid);
+      doc.status = calculateStatus(doc);
+      doc.payments.splice(idx, 1);
+      Store.save();
+      toast('Payment removed');
+      this.render();
+    });
+  },
+
+  confirmDeleteDoc(id) {
+    confirmDialog('Delete Document', 'This document will be permanently deleted.', () => {
+      Store.data.invoices = Store.data.invoices.filter(d => d.id !== id);
+      Store.data.quotes = Store.data.quotes.filter(d => d.id !== id);
+      Store.save();
+      toast('Deleted');
+      this.navigate('invoices');
+    });
+  },
+
+  // ==================== Print Invoice (Crossed Threads Premium Design) ====================
+  printInvoice(docId, options = {}) {
+    const noPrint = options === true || (options && options.noPrint);
+    const doc = [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === docId);
+    if (!doc) return;
+    const b = Store.data.business;
+    const isQuote = doc.type === 'quote';
+    const status = calculateStatus(doc);
+    const fileName = buildPrintFilename(doc);
+
+    const logoHtml = b.logo
+      ? `<img src="${b.logo}" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : crossedNeedlesSVG(42, '#faf7f2');
+
+    const statusBanner = !isQuote ? `
+      <div class="ct-status-banner ${
+        status === 'paid' ? 'ct-status-paid' :
+        status === 'partly' ? 'ct-status-partly' :
+        'ct-status-unpaid'
+      }">${statusLabel(status)}</div>` : `<div class="ct-status-banner ct-status-quote">QUOTATION</div>`;
+
+    const itemsHtml = doc.items.map(item => `
+      <tr>
+        <td>${escapeHTML(item.description)}</td>
+        <td>${item.qty}</td>
+        <td>${formatCurrency(item.price)}</td>
+        <td>${formatCurrency(item.total)}</td>
+      </tr>
+    `).join('');
+
+    const vehicleHtml = (doc.vehicleMake || doc.vehicleModel || doc.vehicleReg) ? `
+      <div class="ct-project-row"><span class="ct-project-label">Vehicle</span><span class="ct-project-value">${escapeHTML(doc.vehicleMake || '—')}</span></div>
+      <div class="ct-project-row"><span class="ct-project-label">Model</span><span class="ct-project-value">${escapeHTML(doc.vehicleModel || '—')}</span></div>
+      <div class="ct-project-row"><span class="ct-project-label">Ref / Reg</span><span class="ct-project-value">${escapeHTML(doc.vehicleReg || '—')}</span></div>
+    ` : `<div class="ct-project-row"><span class="ct-project-value">—</span></div>`;
+
+    const paymentsHtml = (!isQuote && doc.payments && doc.payments.length > 0) ? `
+      <div class="ct-pay-history">
+        <div class="ct-pay-history-title">Payment History</div>
+        ${doc.payments.map(p => `<div class="ct-pay-row"><span>${formatDate(p.date)} · ${escapeHTML(p.method||'')}${p.note?' · '+escapeHTML(p.note):''}</span><span>${formatCurrency(p.amount)}</span></div>`).join('')}
+      </div>
+    ` : '';
+
+    const printHtml = `
+      <div class="invoice-print">
+        <div class="ct-watermark">CROSSED THREADS</div>
+
+        <div class="ct-header">
+          <div class="ct-brand-block">
+            <div class="ct-logo-mark">${logoHtml}</div>
+            <div>
+              <h1 class="ct-company-name">${escapeHTML(b.name || 'Crossed Threads')}</h1>
+              <div class="ct-tagline">Automotive · Upholstery · Furniture</div>
+              <div class="ct-company-info">
+                ${escapeHTML(b.address || '')}<br>
+                ${escapeHTML(b.phone || '')} · ${escapeHTML(b.email || '')}
+              </div>
+            </div>
+          </div>
+          <div class="ct-doc-info">
+            <div class="ct-doc-title ${isQuote?'ct-doc-type-quote':''}">${isQuote ? 'QUOTE' : 'INVOICE'}</div>
+            <div class="ct-doc-no">${escapeHTML(doc.number)}</div>
+            <div class="ct-doc-date">Date: ${formatDate(doc.date)}</div>
+            ${!isQuote && doc.dueDate ? `<div class="ct-doc-date">Due: ${formatDate(doc.dueDate)}</div>` : ''}
+          </div>
+        </div>
+
+        ${statusBanner}
+
+        <div class="ct-parties">
+          <div class="ct-panel">
+            <div class="ct-panel-label">Billed To</div>
+            <div class="ct-panel-name">${escapeHTML(doc.customerName || 'Walk-in Customer')}</div>
+            <div class="ct-panel-info">
+              ${doc.customerPhone ? escapeHTML(doc.customerPhone) + '<br>' : ''}
+              ${doc.customerEmail ? escapeHTML(doc.customerEmail) + '<br>' : ''}
+              ${doc.customerAddress ? escapeHTML(doc.customerAddress) : ''}
+            </div>
+          </div>
+          <div class="ct-panel">
+            <div class="ct-panel-label">Vehicle / Project</div>
+            ${vehicleHtml}
+          </div>
+        </div>
+
+        <table class="ct-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Rate</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+
+        <div class="ct-totals-wrap">
+          <div class="ct-totals">
+            <div class="ct-total-row">
+              <span class="ct-total-label">Subtotal</span>
+              <span class="ct-total-value">${formatCurrency(doc.subtotal)}</span>
+            </div>
+            ${doc.tax > 0 ? `<div class="ct-total-row">
+              <span class="ct-total-label">Tax (${doc.taxRate}%)</span>
+              <span class="ct-total-value">${formatCurrency(doc.tax)}</span>
+            </div>` : ''}
+            <div class="ct-total-row grand">
+              <span class="ct-total-label">Total</span>
+              <span class="ct-total-value">${formatCurrency(doc.total)}</span>
+            </div>
+            ${!isQuote && doc.amountPaid > 0 ? `<div class="ct-total-row paid">
+              <span class="ct-total-label">Paid</span>
+              <span class="ct-total-value">- ${formatCurrency(doc.amountPaid)}</span>
+            </div>` : ''}
+            ${!isQuote && doc.balance > 0 ? `<div class="ct-total-row balance">
+              <span class="ct-total-label">Balance Due</span>
+              <span class="ct-total-value">${formatCurrency(doc.balance)}</span>
+            </div>` : ''}
+          </div>
+        </div>
+
+        ${paymentsHtml}
+
+        ${b.paymentDetails ? `
+          <div class="ct-payment-stamp">
+            <div class="ct-payment-details">
+              <div class="ct-payment-title">Payment Details</div>
+              <div class="ct-payment-body">${escapeHTML(b.paymentDetails)}</div>
+            </div>
+            ${renderStampSVG(doc.date)}
+          </div>
+        ` : `<div style="display:flex; justify-content:flex-end; margin-bottom:16px;">${renderStampSVG(doc.date)}</div>`}
+
+        ${doc.notes ? `
+          <div class="ct-notes">
+            <div class="ct-notes-title">Notes</div>
+            <div class="ct-notes-body">${escapeHTML(doc.notes)}</div>
+          </div>
+        ` : ''}
+
+        <div class="ct-footer">
+          <div class="ct-footer-brand">CROSSED THREADS</div>
+          <div class="ct-footer-crossed">✦ CRAFTED COMFORT · FROM YOUR CAR TO YOUR COUCH ✦</div>
+          ${escapeHTML(b.footerNotes || 'Thank you for your business.')}
+        </div>
+      </div>
+    `;
+
+    const printRoot = document.getElementById('print-root');
+    printRoot.innerHTML = printHtml;
+
+    if (noPrint) return; // used by PDF generation
+
+    // Rename the document so browser's "Save as PDF" defaults to invoice name
+    const previousTitle = document.title;
+    document.title = fileName;
+    toast('Saving as: ' + fileName);
+
+    const restoreTitle = () => {
+      document.title = previousTitle;
+      window.removeEventListener('afterprint', restoreTitle);
+    };
+    window.addEventListener('afterprint', restoreTitle);
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(restoreTitle, 2500);
+    }, 200);
+  },
+
+  // ==================== Settings & Stamp Configuration ====================
+  renderSettings() {
+    const b = Store.data.business;
+    const stmp = b.stamp || {};
+    const sec = Store.data.security || { pin: '1234', enabled: true };
+    const logoHtml = b.logo ? `<img src="${b.logo}" alt="logo">` : `<span class="placeholder" style="color:var(--accent);">${crossedNeedlesSVG(26, 'currentColor')}</span>`;
+    return `<div class="page">
+      <div class="page-header">
+        <h1 class="page-title">Settings</h1>
+        <p class="page-subtitle">Configure business, stamp & security</p>
+      </div>
+      <div class="page-body">
+
+        <div class="settings-section" style="border:1px solid var(--accent);">
+          <div class="settings-section-title">Security & App Lock</div>
+          <div class="settings-item">
+            <div class="settings-item-label">PIN Protection</div>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="set-pin-enabled" ${sec.enabled !== false ? 'checked' : ''} onchange="App.saveSecuritySetting('enabled', this.checked)">
+              <span style="font-size:13px; color:var(--text-secondary);">${sec.enabled !== false ? 'Active' : 'Disabled'}</span>
+            </label>
+          </div>
+          <div class="settings-item" onclick="App.openChangePinModal()" style="cursor:pointer">
+            <div class="settings-item-label">Change Passcode / PIN</div>
+            <span style="font-size:13px; color:var(--accent); font-weight:600;">Change</span>
+          </div>
+          <div class="settings-item" onclick="App.lockApp()" style="cursor:pointer">
+            <div class="settings-item-label" style="color:var(--warning);">Lock App Now</div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Crossed Threads Rubber Stamp</span>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:var(--accent);">
+              <input type="checkbox" id="stamp-enabled" ${stmp.enabled !== false ? 'checked' : ''} onchange="App.saveStampSetting('enabled', this.checked)">
+              Enable Stamp
+            </label>
+          </div>
+
+          <div style="padding:16px; text-align:center; background:var(--bg-secondary); border-bottom:1px solid var(--border-light)">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-tertiary); margin-bottom:8px; font-weight:600">Stamp Live Preview</div>
+            <div id="stamp-preview-box">${renderStampSVG()}</div>
+          </div>
+
+          <div class="settings-item">
+            <div class="settings-item-label">Stamp Header Text</div>
+            <input type="text" id="set-stamp-header" value="${escapeHTML(stmp.header || 'CROSSED THREADS')}" onchange="App.saveStampSetting('header', this.value)">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Location Subtext</div>
+            <input type="text" id="set-stamp-location" value="${escapeHTML(stmp.location || 'BUZIGA · KAMPALA · UGANDA')}" onchange="App.saveStampSetting('location', this.value)">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Phone Subtext</div>
+            <input type="text" id="set-stamp-phone" value="${escapeHTML(stmp.phone || 'TEL: +256 704 808 819')}" onchange="App.saveStampSetting('phone', this.value)">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Date Mode</div>
+            <select id="set-stamp-datemode" onchange="App.saveStampSetting('dateMode', this.value)" style="background:var(--card); padding:6px 10px; border-radius:8px; border:1px solid var(--border)">
+              <option value="auto" ${stmp.dateMode==='auto'?'selected':''}>Auto (Document Date)</option>
+              <option value="today" ${stmp.dateMode==='today'?'selected':''}>Auto (Current Date)</option>
+              <option value="custom" ${stmp.dateMode==='custom'?'selected':''}>Custom Date</option>
+            </select>
+          </div>
+          ${stmp.dateMode === 'custom' ? `
+            <div class="settings-item">
+              <div class="settings-item-label">Custom Date String</div>
+              <input type="text" id="set-stamp-customdate" value="${escapeHTML(stmp.customDate || '')}" placeholder="e.g. 15 NOV 2026" onchange="App.saveStampSetting('customDate', this.value)">
+            </div>
+          ` : ''}
+          <div class="settings-item">
+            <div class="settings-item-label">Tilt Angle (° degrees)</div>
+            <input type="number" id="set-stamp-tilt" value="${stmp.tiltAngle !== undefined ? stmp.tiltAngle : -6}" onchange="App.saveStampSetting('tiltAngle', parseFloat(this.value)||0)" min="-25" max="25">
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Business Info</div>
+          <div class="logo-upload">
+            <div class="logo-preview">${logoHtml}</div>
+            <div style="flex:1">
+              <div style="font-weight:600; font-size:14px; margin-bottom:4px">Logo</div>
+              <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px">PNG or JPG, square recommended</div>
+              <div style="display:flex; gap:8px">
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('logo-input').click()">Upload</button>
+                ${b.logo ? `<button class="btn btn-danger btn-sm" onclick="App.removeLogo()">Remove</button>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Company Name</div>
+            <input type="text" id="set-name" value="${escapeHTML(b.name)}" onchange="App.saveBusinessSetting('name', this.value)">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Address</div>
+            <input type="text" id="set-address" value="${escapeHTML(b.address)}" onchange="App.saveBusinessSetting('address', this.value)">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Phone</div>
+            <input type="tel" id="set-phone" value="${escapeHTML(b.phone)}" onchange="App.saveBusinessSetting('phone', this.value)">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Email</div>
+            <input type="email" id="set-email" value="${escapeHTML(b.email)}" onchange="App.saveBusinessSetting('email', this.value)">
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Money & Numbering</div>
+          <div class="settings-item">
+            <div class="settings-item-label">Currency</div>
+            <select id="set-currency" onchange="App.saveBusinessSetting('currency', this.value)" style="background:var(--card); padding:6px 10px; border-radius:8px; border:1px solid var(--border); max-width:50%">
+              <option value="UGX" ${b.currency==='UGX'?'selected':''}>UGX — Ugandan Shilling</option>
+              <option value="USD" ${b.currency==='USD'?'selected':''}>USD — US Dollar</option>
+              <option value="KES" ${b.currency==='KES'?'selected':''}>KES — Kenyan Shilling</option>
+              <option value="TZS" ${b.currency==='TZS'?'selected':''}>TZS — Tanzanian Shilling</option>
+              <option value="RWF" ${b.currency==='RWF'?'selected':''}>RWF — Rwandan Franc</option>
+              <option value="EUR" ${b.currency==='EUR'?'selected':''}>EUR — Euro</option>
+              <option value="GBP" ${b.currency==='GBP'?'selected':''}>GBP — Pound Sterling</option>
+            </select>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Invoice Prefix</div>
+            <input type="text" id="set-invoice-prefix" value="${escapeHTML(b.invoicePrefix)}" onchange="App.saveBusinessSetting('invoicePrefix', this.value)">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Next Invoice #</div>
+            <input type="number" id="set-next-invoice" value="${b.nextInvoiceNo}" onchange="App.saveBusinessSetting('nextInvoiceNo', parseInt(this.value)||1)">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Quote Prefix</div>
+            <input type="text" id="set-quote-prefix" value="${escapeHTML(b.quotePrefix)}" onchange="App.saveBusinessSetting('quotePrefix', this.value)">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Default Tax %</div>
+            <input type="number" id="set-default-tax" value="${b.defaultTax}" onchange="App.saveBusinessSetting('defaultTax', parseFloat(this.value)||0)">
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Payment Details (Printed on Invoice)</div>
+          <div style="padding:0 16px 14px">
+            <textarea id="set-payment-details" style="width:100%; background:var(--bg-secondary); border:1px solid var(--border); border-radius:10px; padding:10px; color:var(--text); font-size:13px; resize:vertical; min-height:100px" onchange="App.saveBusinessSetting('paymentDetails', this.value)">${escapeHTML(b.paymentDetails || '')}</textarea>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Footer Notes (Printed)</div>
+          <div style="padding:0 16px 14px">
+            <textarea id="set-footer-notes" style="width:100%; background:var(--bg-secondary); border:1px solid var(--border); border-radius:10px; padding:10px; color:var(--text); font-size:13px; resize:vertical; min-height:80px" onchange="App.saveBusinessSetting('footerNotes', this.value)">${escapeHTML(b.footerNotes || '')}</textarea>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Catalogue & Expenses</div>
+          <div class="settings-item" onclick="App.navigate('products')" style="cursor:pointer">
+            <div class="settings-item-label">Products & Services</div>
+            <span style="font-size:13px; color:var(--accent); font-weight:600;">Open →</span>
+          </div>
+          <div class="settings-item" onclick="App.navigate('expenses')" style="cursor:pointer">
+            <div class="settings-item-label">Expenses</div>
+            <span style="font-size:13px; color:var(--accent); font-weight:600;">Open →</span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Data Management (Local Only)</div>
+          <div class="settings-item">
+            <div class="settings-item-label">Storage</div>
+            <span class="settings-item-value" id="storage-usage">Calculating…</span>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Persistent Storage</div>
+            <span class="settings-item-value" id="persist-status">Checking…</span>
+          </div>
+          <div class="settings-item" style="flex-direction:column; align-items:stretch; gap:10px;">
+            <button class="btn btn-secondary btn-sm" onclick="App.downloadBackup()">Download Backup (JSON)</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('restore-input').click()">Restore from Backup</button>
+            <input type="file" id="restore-input" accept="application/json,.json" style="display:none" onchange="App.handleRestoreFile(event)">
+            <p style="font-size:11px; color:var(--text-tertiary); margin:0;">All data stays on this device. Backup regularly. Restore will overwrite current data after confirmation.</p>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Appearance</div>
+          <div class="theme-options">
+            <button class="theme-option ${Store.data.theme === 'dark' ? 'active' : ''}" onclick="App.setTheme('dark')">Dark</button>
+            <button class="theme-option ${Store.data.theme === 'light' ? 'active' : ''}" onclick="App.setTheme('light')">Light</button>
+            <button class="theme-option ${Store.data.theme === 'auto' ? 'active' : ''}" onclick="App.setTheme('auto')">Auto</button>
+          </div>
+        </div>
+
+        <div style="text-align:center; padding:20px; color:var(--text-tertiary); font-size:11px; letter-spacing:1.5px;">
+          ✦ CROSSED THREADS ✦<br>
+          <span style="font-size:10px;">CRAFTED COMFORT · FROM YOUR CAR TO YOUR COUCH</span>
+        </div>
+
+      </div>
+      ${this.bottomNav('settings')}
+    </div>`;
+    // Populate storage stats asynchronously
+    setTimeout(() => this.updateStorageInfo(), 50);
+  },
+
+  async updateStorageInfo() {
+    try {
+      if (navigator.storage && navigator.storage.estimate) {
+        const est = await navigator.storage.estimate();
+        const used = ((est.usage || 0) / 1024 / 1024).toFixed(2);
+        const quota = ((est.quota || 0) / 1024 / 1024).toFixed(0);
+        const el = document.getElementById('storage-usage');
+        if (el) el.textContent = `${used} MB used of ~${quota} MB`;
+      }
+      if (navigator.storage && navigator.storage.persisted) {
+        const persisted = await navigator.storage.persisted();
+        const el = document.getElementById('persist-status');
+        if (el) el.textContent = persisted ? 'Granted (protected)' : 'Not granted';
+      }
+    } catch (e) { /* ignore */ }
+  },
+
+  async downloadBackup() {
+    try {
+      const json = await Store.exportBackup();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `crossed-threads-backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Backup downloaded');
+    } catch (e) {
+      toast('Backup failed');
+      console.error(e);
+    }
+  },
+
+  handleRestoreFile(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const text = ev.target.result;
+        // Validate
+        const parsed = JSON.parse(text);
+        if (!parsed.data || !parsed.data.business) throw new Error('Invalid format');
+        confirmDialog('Restore Backup', 'This will OVERWRITE all current invoices, customers, products and settings on this device. Continue?', async () => {
+          await Store.importBackup(text);
+          toast('Backup restored successfully');
+          this.render();
+        });
+      } catch (e) {
+        toast('Invalid backup file');
+        console.error(e);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  },
+
+  saveBusinessSetting(key, value) {
+    Store.data.business[key] = value;
+    Store.save();
+    toast('Saved');
+    if (['name','address','phone','email','currency'].includes(key)) this.render();
+  },
+
+  saveStampSetting(key, value) {
+    if (!Store.data.business.stamp) Store.data.business.stamp = {};
+    Store.data.business.stamp[key] = value;
+    Store.save();
+    const previewBox = document.getElementById('stamp-preview-box');
+    if (previewBox) previewBox.innerHTML = renderStampSVG();
+    toast('Stamp updated');
+    if (['dateMode'].includes(key)) this.render();
+  },
+
+  saveSecuritySetting(key, value) {
+    if (!Store.data.security) Store.data.security = { pin: '1234', enabled: true };
+    Store.data.security[key] = value;
+    Store.save();
+    toast('Security updated');
+    this.render();
+  },
+
+  openChangePinModal() {
+    showModal(`
+      <h3 class="modal-title">Change PIN</h3>
+      <div class="form-group">
+        <label class="form-label">Current PIN</label>
+        <input type="password" class="form-input" id="pin-current" placeholder="Enter current PIN" maxlength="4" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label class="form-label">New PIN (4 digits)</label>
+        <input type="password" class="form-input" id="pin-new" placeholder="Enter new PIN" maxlength="4" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm New PIN</label>
+        <input type="password" class="form-input" id="pin-confirm" placeholder="Confirm new PIN" maxlength="4" inputmode="numeric">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1" onclick="App.changePin()">Save PIN</button>
+      </div>
+    `);
+  },
+
+  changePin() {
+    const cur = document.getElementById('pin-current').value;
+    const nw = document.getElementById('pin-new').value;
+    const cf = document.getElementById('pin-confirm').value;
+    const sec = Store.data.security || { pin: '1234' };
+    if (cur !== (sec.pin || '1234')) { toast('Current PIN is incorrect'); return; }
+    if (nw.length !== 4 || !/^\d{4}$/.test(nw)) { toast('New PIN must be 4 digits'); return; }
+    if (nw !== cf) { toast('PINs do not match'); return; }
+    Store.data.security.pin = nw;
+    Store.save();
+    closeModal();
+    toast('PIN changed successfully');
+  },
+
+  removeLogo() {
+    confirmDialog('Remove Logo', 'Remove the business logo from the app and invoices?', () => {
+      Store.data.business.logo = '';
+      Store.save();
+      toast('Logo removed');
+      this.render();
+    });
+  },
+
+  setTheme(theme) {
+    Store.data.theme = theme;
+    Store.save();
+    this.applyTheme();
+    this.render();
+  },
+
+  // ==================== Products ====================
+  renderProducts() {
+    const products = (Store.data.products || []).filter(p => !p.archived);
+    const search = (this.state.search || '').toLowerCase();
+    let list = products;
+    if (search) {
+      list = products.filter(p =>
+        (p.name || '').toLowerCase().includes(search) ||
+        (p.category || '').toLowerCase().includes(search) ||
+        (p.description || '').toLowerCase().includes(search)
+      );
+    }
+    list = [...list].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    return `<div class="page">
+      <div class="page-header">
+        <div class="topbar">
+          <button class="back-btn" onclick="App.navigate('settings')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <h1 style="font-size:17px; font-weight:700; margin:0">Products & Services</h1>
+          <div style="width:60px"></div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="search-bar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Search catalogue..." value="${escapeHTML(this.state.search||'')}" oninput="App.state.search=this.value;App.render()">
+        </div>
+        <button class="btn btn-primary btn-block mb-16" onclick="App.addProduct()">+ Add Product / Service</button>
+        <p style="font-size:12px; color:var(--text-secondary); margin:0 0 12px;">Type a description on any invoice to get suggestions from this catalogue.</p>
+        ${list.length === 0 ? this.emptyState('No products yet','Add products and services for quick invoicing','Add Product','App.addProduct()') :
+          list.map(p => `
+            <div class="card">
+              <div class="product-item">
+                <div style="flex:1; min-width:0">
+                  <div style="font-weight:600; font-size:14px">${escapeHTML(p.name)}</div>
+                  ${p.category ? `<div style="font-size:11px; color:var(--text-tertiary); margin-top:2px">${escapeHTML(p.category)}</div>` : ''}
+                  <div class="product-price">${formatCurrency(p.price)}</div>
+                </div>
+                <button class="icon-btn" style="width:32px;height:32px" onclick="event.stopPropagation();App.deleteProduct('${p.id}')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                </button>
+              </div>
+            </div>
+          `).join('')}
+      </div>
+    </div>`;
+  },
+
+  addProduct() {
+    showModal(`
+      <h3 class="modal-title">Add Product / Service</h3>
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input type="text" class="form-input" id="prod-name" placeholder="e.g. Full Interior Detailing">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category (optional)</label>
+        <input type="text" class="form-input" id="prod-category" placeholder="e.g. Upholstery, Detailing, Furniture">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Price</label>
+        <input type="number" class="form-input" id="prod-price" placeholder="0" min="0" step="any">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <input type="text" class="form-input" id="prod-desc" placeholder="Short description">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1" onclick="App.saveProduct()">Save</button>
+      </div>
+    `);
+  },
+
+  saveProduct() {
+    const name = document.getElementById('prod-name').value.trim();
+    const category = (document.getElementById('prod-category') && document.getElementById('prod-category').value.trim()) || '';
+    const price = parseFloat(document.getElementById('prod-price').value) || 0;
+    const description = (document.getElementById('prod-desc') && document.getElementById('prod-desc').value.trim()) || '';
+    if (!name) { toast('Name is required'); return; }
+    if (!Store.data.products) Store.data.products = [];
+    // Avoid exact-name duplicates (case-insensitive)
+    const exists = Store.data.products.find(p => !p.archived && (p.name || '').toLowerCase() === name.toLowerCase());
+    if (exists) {
+      toast('Similar item already exists — select it from suggestions instead');
+      closeModal();
+      return;
+    }
+    Store.data.products.push({ id: uid(), name, category, description, price, archived: false, createdAt: Date.now() });
+    Store.save();
+    closeModal();
+    toast('Product added to catalogue');
+    this.render();
+  },
+
+  deleteProduct(id) {
+    confirmDialog('Delete Product', 'Remove this product from the catalogue? Historical invoices are not affected.', () => {
+      const p = Store.data.products.find(x => x.id === id);
+      if (p) { p.archived = true; } // soft-delete / archive
+      else Store.data.products = Store.data.products.filter(x => x.id !== id);
+      Store.save();
+      toast('Product removed');
+      this.render();
+    });
+  },
+
+  // ==================== Expenses ====================
+  renderExpenses() {
+    const expenses = [...(Store.data.expenses || [])].sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
+    const total = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    const thisMonth = expenses.filter(e => {
+      if (!e.date) return false;
+      const d = new Date(e.date);
+      const now = new Date();
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const monthTotal = thisMonth.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+
+    return `<div class="page">
+      <div class="page-header">
+        <div class="topbar">
+          <button class="back-btn" onclick="App.navigate('settings')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <h1 style="font-size:17px; font-weight:700; margin:0">Expenses</h1>
+          <div style="width:60px"></div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="detail-summary-row">
+          <div class="detail-summary">
+            <div class="detail-summary-value warning">${formatCurrency(monthTotal)}</div>
+            <div class="detail-summary-label">This Month</div>
+          </div>
+          <div class="detail-summary">
+            <div class="detail-summary-value">${formatCurrency(total)}</div>
+            <div class="detail-summary-label">All Time</div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block mb-16" onclick="App.openExpenseModal()">+ Add Expense</button>
+        ${expenses.length === 0 ? this.emptyState('No expenses yet', 'Track materials, transport, tools and other costs', 'Add Expense', 'App.openExpenseModal()') :
+          expenses.map(e => `
+            <div class="card">
+              <div class="list-item">
+                <div class="list-item-info">
+                  <div class="list-item-title">${escapeHTML(e.description || e.category || 'Expense')}</div>
+                  <div class="list-item-sub">${formatDate(e.date)} · ${escapeHTML(e.category || 'General')}${e.note ? ' · ' + escapeHTML(e.note) : ''}</div>
+                </div>
+                <div style="text-align:right; display:flex; align-items:center; gap:8px;">
+                  <div style="font-weight:700; font-size:14px; color:var(--warning)">${formatCurrency(e.amount)}</div>
+                  <button class="icon-btn" style="width:32px;height:32px" onclick="App.deleteExpense('${e.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+      </div>
+      ${this.bottomNav('settings')}
+    </div>`;
+  },
+
+  openExpenseModal(editId) {
+    const e = editId ? (Store.data.expenses || []).find(x => x.id === editId) : null;
+    const today = todayStr();
+    showModal(`
+      <h3 class="modal-title">${e ? 'Edit' : 'Add'} Expense</h3>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input type="text" class="form-input" id="exp-desc" placeholder="e.g. Leather hides, Fuel, Thread" value="${e ? escapeHTML(e.description || '') : ''}">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Amount</label>
+          <input type="number" class="form-input" id="exp-amount" placeholder="0" min="0" step="any" value="${e ? (e.amount || '') : ''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="exp-date" value="${e ? (e.date || today) : today}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="exp-category">
+          ${['Materials','Transport','Tools','Labour','Utilities','Rent','Marketing','Other'].map(c =>
+            `<option value="${c}" ${e && e.category === c ? 'selected' : ''}>${c}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note (optional)</label>
+        <input type="text" class="form-input" id="exp-note" placeholder="Supplier or reference" value="${e ? escapeHTML(e.note || '') : ''}">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1" onclick="App.saveExpense(${e ? `'${e.id}'` : 'null'})">Save</button>
+      </div>
+    `);
+  },
+
+  saveExpense(editId) {
+    const description = document.getElementById('exp-desc').value.trim();
+    const amount = parseFloat(document.getElementById('exp-amount').value) || 0;
+    const date = document.getElementById('exp-date').value;
+    const category = document.getElementById('exp-category').value;
+    const note = document.getElementById('exp-note').value.trim();
+    if (!description) { toast('Description is required'); return; }
+    if (amount <= 0) { toast('Enter a valid amount'); return; }
+    if (!Store.data.expenses) Store.data.expenses = [];
+    if (editId) {
+      const e = Store.data.expenses.find(x => x.id === editId);
+      if (e) {
+        e.description = description; e.amount = amount; e.date = date; e.category = category; e.note = note;
+      }
+    } else {
+      Store.data.expenses.push({
+        id: uid(), description, amount, date, category, note, createdAt: Date.now()
+      });
+    }
+    Store.save();
+    closeModal();
+    toast('Expense saved');
+    this.render();
+  },
+
+  deleteExpense(id) {
+    confirmDialog('Delete Expense', 'Remove this expense record?', () => {
+      Store.data.expenses = (Store.data.expenses || []).filter(e => e.id !== id);
+      Store.save();
+      toast('Expense deleted');
+      this.render();
+    });
+  },
+
+  // ==================== Sharing, PDF, Duplicate, Cancel, Convert ====================
+  async generatePrintHtml(docId) {
+    // Reuse the existing printInvoice logic but return the HTML string
+    const doc = [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === docId);
+    if (!doc) return null;
+    // Temporarily call the internal builder by reusing printInvoice's construction
+    // For simplicity we trigger the same DOM build then extract
+    this.printInvoice(docId, true); // silent mode if we add it, else we extract from print-root
+    return document.getElementById('print-root').innerHTML;
+  },
+
+  async downloadInvoicePDF(docId) {
+    const doc = [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === docId);
+    if (!doc) return;
+    toast('Generating PDF…');
+    this.printInvoice(docId, { noPrint: true }); // builds into print-root without opening print dialog
+    const element = document.querySelector('#print-root .invoice-print');
+    if (!element) { toast('Print layout not ready'); return; }
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: buildPrintFilename(doc) + '.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    try {
+      await html2pdf().set(opt).from(element).save();
+      toast('PDF downloaded');
+    } catch (e) {
+      console.error(e);
+      toast('PDF generation failed — try Print instead');
+    }
+  },
+
+  shareWhatsApp(docId) {
+    const doc = [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === docId);
+    if (!doc) return;
+    const b = Store.data.business;
+    const isQuote = doc.type === 'quote';
+    const status = calculateStatus(doc);
+    let msg = `*${isQuote ? 'QUOTATION' : 'INVOICE'} from ${b.name}*\n`;
+    msg += `No: ${doc.number}\nDate: ${formatDate(doc.date)}\n`;
+    if (doc.customerName) msg += `Customer: ${doc.customerName}\n`;
+    if (doc.vehicleMake || doc.vehicleModel) msg += `Vehicle/Project: ${[doc.vehicleMake, doc.vehicleModel, doc.vehicleReg].filter(Boolean).join(' ')}\n`;
+    msg += `\n*Items:*\n`;
+    (doc.items || []).forEach(it => {
+      msg += `• ${it.description} — ${it.qty} × ${formatCurrency(it.price)} = ${formatCurrency(it.total)}\n`;
+    });
+    msg += `\nSubtotal: ${formatCurrency(doc.subtotal)}`;
+    if (doc.tax > 0) msg += `\nTax (${doc.taxRate}%): ${formatCurrency(doc.tax)}`;
+    msg += `\n*Total: ${formatCurrency(doc.total)}*`;
+    if (!isQuote) {
+      msg += `\nPaid: ${formatCurrency(doc.amountPaid)}\nBalance: ${formatCurrency(doc.balance)}`;
+      msg += `\nStatus: ${statusLabel(status)}`;
+    }
+    if (b.paymentDetails) msg += `\n\nPayment details:\n${b.paymentDetails}`;
+    msg += `\n\n${b.footerNotes || 'Thank you for your business.'}`;
+    const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank');
+  },
+
+  shareEmail(docId) {
+    const doc = [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === docId);
+    if (!doc) return;
+    const b = Store.data.business;
+    const isQuote = doc.type === 'quote';
+    const subject = `${isQuote ? 'Quotation' : 'Invoice'} ${doc.number} from ${b.name}`;
+    let body = `Dear ${doc.customerName || 'Customer'},\n\nPlease find details of your ${isQuote ? 'quotation' : 'invoice'} below.\n\n`;
+    body += `Number: ${doc.number}\nDate: ${formatDate(doc.date)}\n`;
+    if (doc.dueDate) body += `Due: ${formatDate(doc.dueDate)}\n`;
+    body += `\nItems:\n`;
+    (doc.items || []).forEach(it => {
+      body += `- ${it.description}: ${it.qty} × ${formatCurrency(it.price)} = ${formatCurrency(it.total)}\n`;
+    });
+    body += `\nTotal: ${formatCurrency(doc.total)}\n`;
+    if (!isQuote) body += `Paid: ${formatCurrency(doc.amountPaid)}\nBalance Due: ${formatCurrency(doc.balance)}\n`;
+    if (b.paymentDetails) body += `\nPayment details:\n${b.paymentDetails}\n`;
+    body += `\n${b.footerNotes || ''}\n\nRegards,\n${b.name}\n${b.phone || ''}`;
+    const mailto = `mailto:${encodeURIComponent(doc.customerEmail || '')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+  },
+
+  duplicateDocument(docId) {
+    const src = [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === docId);
+    if (!src) return;
+    const isQuote = src.type === 'quote';
+    const b = Store.data.business;
+    const prefix = isQuote ? b.quotePrefix : b.invoicePrefix;
+    const nextNo = isQuote ? b.nextQuoteNo : b.nextInvoiceNo;
+    const number = `${prefix}${String(nextNo).padStart(4, '0')}`;
+    const newDoc = {
+      id: uid(),
+      number,
+      type: src.type,
+      customerId: src.customerId,
+      customerName: src.customerName,
+      customerPhone: src.customerPhone,
+      customerEmail: src.customerEmail,
+      customerAddress: src.customerAddress,
+      vehicleMake: src.vehicleMake,
+      vehicleModel: src.vehicleModel,
+      vehicleReg: src.vehicleReg,
+      date: todayStr(),
+      dueDate: isQuote ? '' : new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+      items: (src.items || []).map(it => ({ ...it })),
+      taxRate: src.taxRate,
+      subtotal: src.subtotal,
+      tax: src.tax,
+      total: src.total,
+      amountPaid: 0,
+      balance: src.total,
+      status: isQuote ? 'draft' : 'sent',
+      notes: src.notes || '',
+      payments: [],
+      createdAt: Date.now(),
+      duplicatedFrom: src.id
+    };
+    if (isQuote) {
+      Store.data.quotes.push(newDoc);
+      Store.data.business.nextQuoteNo = (Store.data.business.nextQuoteNo || 1) + 1;
+    } else {
+      Store.data.invoices.push(newDoc);
+      Store.data.business.nextInvoiceNo = (Store.data.business.nextInvoiceNo || 1) + 1;
+    }
+    Store.save();
+    toast(isQuote ? 'Quote duplicated' : 'Invoice duplicated');
+    this.navigate('invoice-detail', { id: newDoc.id });
+  },
+
+  convertQuoteToInvoice(quoteId) {
+    const q = Store.data.quotes.find(d => d.id === quoteId);
+    if (!q) return;
+    if (q.convertedToInvoiceId) {
+      toast('This quotation was already converted');
+      this.navigate('invoice-detail', { id: q.convertedToInvoiceId });
+      return;
+    }
+    confirmDialog('Convert to Invoice', 'Create a new invoice from this quotation? The quotation will be kept for history.', () => {
+      const b = Store.data.business;
+      const number = `${b.invoicePrefix}${String(b.nextInvoiceNo).padStart(4, '0')}`;
+      const inv = {
+        id: uid(),
+        number,
+        type: 'invoice',
+        customerId: q.customerId,
+        customerName: q.customerName,
+        customerPhone: q.customerPhone,
+        customerEmail: q.customerEmail,
+        customerAddress: q.customerAddress,
+        vehicleMake: q.vehicleMake,
+        vehicleModel: q.vehicleModel,
+        vehicleReg: q.vehicleReg,
+        date: todayStr(),
+        dueDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+        items: (q.items || []).map(it => ({ ...it })),
+        taxRate: q.taxRate,
+        subtotal: q.subtotal,
+        tax: q.tax,
+        total: q.total,
+        amountPaid: 0,
+        balance: q.total,
+        status: 'sent',
+        notes: q.notes || '',
+        payments: [],
+        createdAt: Date.now(),
+        fromQuoteId: q.id
+      };
+      Store.data.invoices.push(inv);
+      Store.data.business.nextInvoiceNo = (Store.data.business.nextInvoiceNo || 1) + 1;
+      q.status = 'accepted';
+      q.convertedToInvoiceId = inv.id;
+      Store.save();
+      toast('Invoice created from quotation');
+      this.navigate('invoice-detail', { id: inv.id });
+    });
+  },
+
+  cancelInvoice(docId) {
+    const doc = Store.data.invoices.find(d => d.id === docId);
+    if (!doc) return;
+    if (doc.status === 'cancelled') { toast('Already cancelled'); return; }
+    if ((doc.amountPaid || 0) > 0) {
+      toast('Cannot cancel an invoice with payments. Reverse payments first or issue a credit note.');
+      return;
+    }
+    confirmDialog('Cancel Invoice', 'Mark this invoice as cancelled? It will be preserved for audit history and will no longer be editable as open.', () => {
+      doc.status = 'cancelled';
+      doc.cancelledAt = Date.now();
+      Store.save();
+      toast('Invoice cancelled');
+      this.render();
+    });
+  },
+
+  printReceipt(docId) {
+    const doc = Store.data.invoices.find(d => d.id === docId);
+    if (!doc) return;
+    const b = Store.data.business;
+    const lastPayment = (doc.payments && doc.payments.length) ? doc.payments[doc.payments.length - 1] : null;
+    const receiptHtml = `
+      <div class="invoice-print" style="padding:24px 28px; min-height:auto;">
+        <div style="text-align:center; margin-bottom:18px;">
+          <div style="font-family:Georgia,serif; font-size:20px; font-weight:700; color:#a85f28;">${escapeHTML(b.name)}</div>
+          <div style="font-size:11px; color:#6b5d50;">${escapeHTML(b.address || '')} · ${escapeHTML(b.phone || '')}</div>
+          <div style="font-size:16px; font-weight:700; margin-top:12px; letter-spacing:2px;">PAYMENT RECEIPT</div>
+        </div>
+        <div style="border-top:1px dashed #c9a227; border-bottom:1px dashed #c9a227; padding:12px 0; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Receipt for Invoice</span><strong>${escapeHTML(doc.number)}</strong></div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Customer</span><strong>${escapeHTML(doc.customerName || 'Walk-in')}</strong></div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Date</span><strong>${formatDate(lastPayment ? lastPayment.date : todayStr())}</strong></div>
+          ${lastPayment ? `<div style="display:flex; justify-content:space-between; font-size:12px;"><span>Method</span><strong>${escapeHTML(lastPayment.method || '')}</strong></div>` : ''}
+        </div>
+        <div style="text-align:center; margin:18px 0;">
+          <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#8a6a4d;">Amount Received</div>
+          <div style="font-size:28px; font-weight:700; color:#15803d; font-family:Georgia,serif;">${formatCurrency(lastPayment ? lastPayment.amount : doc.amountPaid)}</div>
+        </div>
+        <div style="font-size:12px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between;"><span>Invoice Total</span><span>${formatCurrency(doc.total)}</span></div>
+          <div style="display:flex; justify-content:space-between;"><span>Total Paid to Date</span><span>${formatCurrency(doc.amountPaid)}</span></div>
+          <div style="display:flex; justify-content:space-between; font-weight:700; margin-top:6px;"><span>Outstanding Balance</span><span>${formatCurrency(doc.balance)}</span></div>
+        </div>
+        <div style="margin-top:24px; text-align:center; font-size:10px; color:#6b5d50; border-top:1px dashed #c9a227; padding-top:12px;">
+          Thank you · ${escapeHTML(b.name)} · Crafted Comfort
+        </div>
+      </div>
+    `;
+    const printRoot = document.getElementById('print-root');
+    printRoot.innerHTML = receiptHtml;
+    const previousTitle = document.title;
+    document.title = `Receipt_${doc.number}_${todayStr()}`;
+    const restore = () => { document.title = previousTitle; window.removeEventListener('afterprint', restore); };
+    window.addEventListener('afterprint', restore);
+    setTimeout(() => { window.print(); setTimeout(restore, 2000); }, 150);
+  }
+};
+
+// ==================== Boot ====================
+document.addEventListener('DOMContentLoaded', () => { App.init(); });
+</script>
+</body>
+</html>
