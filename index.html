@@ -4,11 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Crossed Threads">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
 <meta name="theme-color" content="#14100d">
 <meta name="description" content="Offline-first invoicing for Crossed Threads — automotive upholstery & furniture">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <title>Crossed Threads — Invoicing</title>
 <script src="js/dexie.min.js"></script>
 <script src="js/html2pdf.bundle.min.js"></script>
@@ -151,6 +156,24 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .btn-danger { background:var(--danger-bg); color:var(--danger); }
 .btn-block { width:100%; }
 .btn-sm { padding:8px 14px; font-size:13px; }
+.btn:disabled, .btn[disabled] { opacity:0.45; cursor:not-allowed; transform:none !important; }
+.install-banner { display:flex; align-items:center; gap:12px; background:linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color:#fff; border-radius:var(--radius); padding:12px 14px; margin-bottom:14px; box-shadow:var(--shadow); }
+.install-banner .install-icon { flex-shrink:0; opacity:0.9; }
+.install-banner .install-text { flex:1; min-width:0; }
+.install-banner .install-title { font-size:13px; font-weight:700; line-height:1.3; }
+.install-banner .install-desc { font-size:11px; opacity:0.85; line-height:1.35; }
+.install-banner .install-cta { background:#fff; color:var(--accent-dark); font-weight:700; font-size:12px;
+  padding:8px 13px; border-radius:9px; flex-shrink:0; }
+.install-banner .install-dismiss { color:#fff; opacity:0.75; width:26px; height:26px; display:grid; place-items:center; flex-shrink:0; }
+.invoice-item-right { display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0; }
+.row-delete { width:30px; height:30px; border-radius:9px; background:var(--danger-bg); color:var(--danger);
+  display:grid; place-items:center; flex-shrink:0; transition:transform 0.15s; }
+.row-delete:active { transform:scale(0.9); }
+.danger-note { font-size:11px; color:var(--text-tertiary); margin:0; line-height:1.5; }
+.settings-item.is-action { cursor:pointer; }
+.settings-item.is-action:active { background:var(--card-hover); }
+.settings-item-value.danger { color:var(--danger); font-weight:600; }
 .items-table { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
 .items-table-head { display:grid; grid-template-columns:1fr 50px 90px 90px 30px; gap:6px;
   padding:10px 12px; background:var(--bg-secondary); font-size:10px; font-weight:700;
@@ -184,7 +207,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .total-row.grand { border-top:1px solid var(--border); margin-top:6px; padding-top:12px; font-size:18px; font-weight:700; }
 .total-row.paid { color:var(--success); }
 .total-row.balance { color:var(--warning); font-weight:600; }
-.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:100;
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:1000;
   display:flex; align-items:flex-end; justify-content:center; animation:fadeIn 0.2s; }
 [data-theme="light"] .modal-overlay { background:rgba(0,0,0,0.4); }
 .modal { background:var(--bg-secondary); width:100%; max-width:500px; border-radius:20px 20px 0 0;
@@ -195,7 +218,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .modal-handle { width:40px; height:4px; background:var(--border); border-radius:100px; margin:0 auto 14px; }
 .toast { position:fixed; bottom:calc(100px + var(--safe-bottom)); left:50%; transform:translateX(-50%);
   background:var(--card); border:1px solid var(--border); padding:12px 20px; border-radius:12px;
-  z-index:200; font-size:13px; font-weight:600; box-shadow:var(--shadow-lg); animation:toastIn 0.25s; max-width:90%; }
+  z-index:1100; font-size:13px; font-weight:600; box-shadow:var(--shadow-lg); animation:toastIn 0.25s; max-width:90%; }
 @keyframes toastIn { from { transform:translate(-50%, 20px); opacity:0; } to { transform:translate(-50%, 0); opacity:1; } }
 .empty-state { text-align:center; padding:40px 20px; color:var(--text-secondary); }
 .empty-state svg { margin-bottom:12px; opacity:0.4; }
@@ -301,7 +324,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .ct-brand-block { display:flex; gap:16px; align-items:center; }
 .ct-logo-mark {
   width:72px; height:72px; border-radius:50%;
-  background: radial-gradient(circle at 30% 30%, #c17a3a, #9a5d28 70%, #6b3f1a);
+  background:#a85f28;
   display:grid; place-items:center; flex-shrink:0; color:#faf7f2;
   box-shadow: inset 0 0 0 2px #faf7f2, inset 0 0 0 3.5px #a85f28;
   overflow:hidden;
@@ -434,8 +457,167 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .pin-keypad { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; max-width:280px; margin:0 auto; }
 .pin-key { width:64px; height:64px; border-radius:50%; background:var(--bg-secondary); border:1px solid var(--border); font-size:22px; font-weight:700; color:var(--text); display:grid; place-items:center; margin:0 auto; transition:all 0.12s; user-select:none; }
 .pin-key:active { transform:scale(0.92); background:var(--card-hover); border-color:var(--accent); }
+.forgot-pin { margin-top:16px; font-size:12px; font-weight:700; color:var(--accent); padding:8px 14px; border-radius:10px; }
+.forgot-pin:active { background:var(--accent-bg); }
+.recovery-code-box { background:var(--bg-secondary); border:1px dashed var(--accent); border-radius:12px; padding:18px 12px; text-align:center;
+  font-family:'Courier New',monospace; font-size:20px; font-weight:700; letter-spacing:1.5px; color:var(--accent); margin:0 0 14px; user-select:all; word-break:break-all; }
 .shake { animation:shake 0.4s ease; }
 @keyframes shake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-10px);} 40%,80%{transform:translateX(10px);} }
+
+/* ==================== Dashboard: period KPIs, attention, jobs ==================== */
+.period-chips { padding:0 0 4px; margin-bottom:10px; }
+.kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.kpi-tile { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; min-width:0; }
+.kpi-label { font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-secondary); font-weight:700; }
+.kpi-value { font-size:20px; font-weight:700; letter-spacing:-0.5px; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kpi-value.success { color:var(--success); } .kpi-value.warning { color:var(--warning); } .kpi-value.danger { color:var(--danger); }
+.kpi-sub { font-size:10px; color:var(--text-tertiary); margin-top:2px; }
+.receivables-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
+.receivable { display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:11px 13px; text-align:left; }
+.receivable:active { background:var(--card-hover); }
+.receivable .r-label { display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.7px; color:var(--text-secondary); font-weight:700; }
+.receivable .r-value { display:block; font-size:15px; font-weight:700; margin-top:2px; }
+.receivable.danger { border-color:rgba(224,107,90,0.45); background:var(--danger-bg); }
+.receivable.danger .r-label { color:var(--danger); }
+.receivable.danger .r-value { color:var(--danger); }
+.attention-list { display:flex; flex-direction:column; gap:8px; }
+.attention-item { display:flex; align-items:center; gap:11px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:11px 13px; text-align:left; width:100%; }
+.attention-item:active { background:var(--card-hover); }
+.attention-icon { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; flex-shrink:0; }
+.attention-body { flex:1; min-width:0; }
+.attention-title { display:block; font-size:13px; font-weight:600; line-height:1.35; }
+.attention-sub { display:block; font-size:11px; color:var(--text-secondary); margin-top:1px; }
+.attention-amount { font-size:13px; font-weight:700; white-space:nowrap; flex-shrink:0; }
+.attention-clear { display:flex; align-items:center; gap:9px; padding:12px 14px; border-radius:var(--radius-sm); background:var(--success-bg); color:var(--success); font-size:12.5px; font-weight:600; }
+.job-card { padding:12px 14px; }
+.job-head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+.job-number { font-size:14px; font-weight:700; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.job-meta { font-size:11.5px; color:var(--text-secondary); margin-top:2px; }
+.job-due { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+.job-due.danger { color:var(--danger); font-weight:600; }
+.job-amount { font-size:13px; font-weight:700; text-align:right; white-space:nowrap; }
+.job-advance { margin-top:10px; width:100%; }
+#home-jobs { scroll-margin-top: 86px; }
+.badge-stage { background:var(--accent-bg); color:var(--accent); }
+.stage-track { display:flex; position:relative; padding-top:2px; }
+.stage-track::before { content:''; position:absolute; left:8%; right:8%; top:11px; height:2px; background:var(--border); }
+.stage-step { flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; position:relative; z-index:1; padding:0 1px; }
+.stage-dot { width:18px; height:18px; border-radius:50%; background:var(--bg-secondary); border:2px solid var(--border); transition:all 0.15s; }
+.stage-step.done .stage-dot { background:var(--accent); border-color:var(--accent); }
+.stage-step.current .stage-dot { background:var(--accent); border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-bg); }
+.stage-name { font-size:9px; line-height:1.2; text-align:center; color:var(--text-tertiary); }
+.stage-step.current .stage-name { color:var(--accent); font-weight:700; }
+.stage-step.done .stage-name { color:var(--text-secondary); }
+.stage-updated { font-size:10px; color:var(--text-tertiary); text-align:center; margin-top:10px; }
+
+/* ==================== Share sheet ==================== */
+.share-options { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.share-option { display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; }
+.share-option:active { background:var(--card-hover); }
+.share-option-icon { width:38px; height:38px; border-radius:11px; display:grid; place-items:center; flex-shrink:0; }
+.share-option-title { display:block; font-size:14px; font-weight:600; }
+.share-option-desc { display:block; font-size:11px; color:var(--text-secondary); margin-top:1px; }
+.share-preview { background:#fff; border:1px solid var(--border); border-radius:10px; overflow:hidden; max-height:240px; display:flex; justify-content:center; margin-bottom:12px; }
+.share-preview img { max-width:100%; max-height:240px; object-fit:contain; display:block; }
+.share-file-pill { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:10px; padding:22px; font-weight:600; color:var(--text-secondary); margin-bottom:12px; }
+.share-note { font-size:12px; color:var(--text-secondary); line-height:1.5; margin:0 0 12px; }
+.share-actions { display:flex; gap:8px; margin-bottom:8px; }
+.share-actions .btn { flex:1; }
+.share-loading { display:flex; align-items:center; justify-content:center; padding:26px 0 10px; }
+.spinner { width:34px; height:34px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.release-notes { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-size:13px; color:var(--text-secondary); line-height:1.7; white-space:pre-line; margin-bottom:16px; }
+
+/* ==================== MODERN INVOICE TEMPLATE (navy & gold) ==================== */
+.invoice-modern {
+  background:#ffffff; color:#1c2a36; padding:0;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-size:7.4pt; min-height:297mm; width:210mm; max-width:100%;
+  box-sizing:border-box; position:relative; line-height:1.45;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.invoice-modern::before { display:none !important; }
+.invoice-modern * { box-sizing:border-box; }
+.m-topbar { height:11mm; background:#15283b; position:relative; flex-shrink:0; }
+.m-topbar::after { content:''; position:absolute; left:0; right:0; bottom:0; height:1.2mm; background:#c9a227; }
+.m-star { position:absolute; right:10mm; top:50%; transform:translateY(-50%); opacity:0.75; }
+.m-inner { padding:0 13mm; flex:1; display:flex; flex-direction:column; }
+.m-header { display:flex; justify-content:space-between; gap:8mm; padding-top:8mm; }
+.m-brand { display:flex; gap:4mm; align-items:flex-start; min-width:0; }
+.m-logo { width:20mm; height:20mm; border-radius:50%; background:#a85f28;
+  display:grid; place-items:center; overflow:hidden; flex-shrink:0; color:#fff;
+  box-shadow:inset 0 0 0 1mm #ffffff, inset 0 0 0 1.4mm #a85f28; }
+.m-logo img { width:100%; height:100%; object-fit:cover; }
+.m-company-name { font-family:Georgia,'Times New Roman',serif; font-size:19pt; font-weight:700;
+  letter-spacing:0.4px; color:#15283b; line-height:1.05; }
+.m-tagline { font-size:6.2pt; letter-spacing:2.2px; text-transform:uppercase; color:#8a6a2f; font-weight:700; margin-top:1mm; }
+.m-phone { font-size:15pt; font-weight:800; color:#15283b; margin-top:2.5mm; letter-spacing:0.4px; }
+.m-company-lines { font-size:6.5pt; color:#4a5a66; line-height:1.55; margin-top:0.8mm; }
+.m-company-meta { text-align:right; font-size:6.6pt; color:#4a5a66; line-height:1.65; padding-top:1.5mm; flex-shrink:0; }
+.m-company-meta strong { color:#15283b; font-size:7.4pt; letter-spacing:0.3px; }
+.m-company-meta .gold { color:#8a6a2f; font-weight:700; }
+.m-title-row { display:grid; grid-template-columns:1.15fr 0.85fr; gap:7mm; margin-top:7mm; align-items:start; }
+.m-party { font-size:7pt; }
+.m-party-row { display:grid; grid-template-columns:17mm 1fr; gap:2mm; padding:0.7mm 0; }
+.m-party-row .k { color:#8a6a2f; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; font-size:5.6pt; padding-top:0.5mm; }
+.m-party-row .v { color:#1c2a36; font-weight:600; word-break:break-word; }
+.m-doc-title { text-align:right; }
+.m-doc-type { font-family:Georgia,'Times New Roman',serif; font-size:22pt; letter-spacing:1px; color:#15283b; line-height:1; font-weight:700; }
+.m-doc-type.quote { color:#8a6a2f; }
+.m-doc-meta { margin-top:3.5mm; display:grid; grid-template-columns:auto auto; gap:1.2mm 4mm; justify-content:end; font-size:6.9pt; }
+.m-doc-meta .k { color:#7a8a96; text-align:right; }
+.m-doc-meta .v { color:#15283b; font-weight:700; text-align:right; }
+.m-band { background:#15283b; color:#fff; font-size:6.6pt; font-weight:700; letter-spacing:1.5px;
+  text-transform:uppercase; padding:1.9mm 3.5mm; margin-top:6mm; flex-shrink:0; }
+.m-scope { padding:2.2mm 0 0; font-size:7pt; color:#3d4c58; }
+.m-scope-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:3mm; margin-top:1.5mm; }
+.m-scope-item .k { font-size:5.4pt; text-transform:uppercase; letter-spacing:0.7px; color:#8a6a2f; font-weight:700; }
+.m-scope-item .v { font-size:7.2pt; font-weight:600; color:#15283b; margin-top:0.3mm; word-break:break-word; }
+.m-table { width:100%; border-collapse:collapse; margin-top:1mm; }
+.m-table th { background:#15283b; color:#fff; font-size:6.1pt; text-transform:uppercase; letter-spacing:0.8px;
+  padding:2mm 3mm; text-align:left; font-weight:700; }
+.m-table th:nth-child(2){ width:13mm; text-align:center; }
+.m-table th:nth-child(3){ width:27mm; text-align:right; }
+.m-table th:nth-child(4){ width:29mm; text-align:right; }
+.m-table td { padding:2mm 3mm; font-size:7.2pt; border-bottom:0.25mm solid #e3e8ec; vertical-align:top; }
+.m-table td:nth-child(2){ text-align:center; }
+.m-table td:nth-child(3){ text-align:right; color:#5a6a76; }
+.m-table td:nth-child(4){ text-align:right; font-weight:700; color:#15283b; }
+.m-total-wrap { display:flex; justify-content:flex-end; margin-top:2.5mm; }
+.m-totals { width:68mm; font-size:7.2pt; }
+.m-total-row { display:flex; justify-content:space-between; gap:6mm; padding:1.2mm 0; border-bottom:0.2mm solid #e3e8ec; }
+.m-total-row .lbl { color:#5a6a76; }
+.m-total-row .val { font-weight:600; color:#15283b; white-space:nowrap; }
+.m-total-row.grand { background:#15283b; color:#fff; padding:2mm 3mm; border-bottom:none; margin-top:1mm; }
+.m-total-row.grand .lbl { color:#cfd8e0; }
+.m-total-row.grand .val { color:#fff; font-size:8.6pt; }
+.m-total-row.balance { background:#c9a227; color:#15283b; padding:2mm 3mm; border-bottom:none; }
+.m-total-row.balance .lbl, .m-total-row.balance .val { color:#15283b; font-weight:800; font-size:8.6pt; }
+.m-bottom { display:grid; grid-template-columns:1.2fr 0.8fr; gap:7mm; margin-top:auto; padding-top:5mm; }
+.m-block-title { font-size:6.2pt; font-weight:800; letter-spacing:1.1px; text-transform:uppercase;
+  color:#15283b; border-bottom:0.7mm solid #c9a227; padding-bottom:1mm; margin-bottom:1.8mm; }
+.m-text { font-size:6.3pt; color:#4a5a66; line-height:1.5; white-space:pre-wrap; }
+.m-pay-stamp { display:flex; gap:4mm; align-items:center; }
+.m-pay-stamp .m-text { flex:1; }
+.m-sign { border-top:0.3mm solid #7a8a96; margin-top:8mm; padding-top:1.2mm; font-size:6.1pt; color:#5a6a76; text-align:center; }
+.m-sign-name { font-family:Georgia,serif; font-size:10pt; font-style:italic; color:#15283b; margin-bottom:0.8mm; }
+.m-footer { background:#15283b; color:#fff; margin-top:auto; padding:2.8mm 13mm;
+  display:flex; justify-content:space-between; align-items:center; gap:6mm; flex-shrink:0; }
+.m-footer .brand { font-family:Georgia,serif; font-size:7.8pt; letter-spacing:1.5px; color:#fff; }
+.m-footer .meta { font-size:5.6pt; color:#b9c6d1; letter-spacing:0.5px; text-align:right; line-height:1.55; }
+.m-footer .gold-dot { color:#c9a227; }
+.m-watermark { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-24deg);
+  font-family:Georgia,serif; font-size:90px; font-weight:700; color:#c9a227; opacity:0.035;
+  white-space:nowrap; pointer-events:none; }
+@media print {
+  .invoice-print.invoice-modern { padding:0 !important; }
+}
+@media (max-width: 430px) {
+  .items-table-head, .items-table-row { grid-template-columns:1fr 42px 78px 28px; gap:5px; padding-left:9px; padding-right:9px; }
+  .items-table-head > div:nth-child(4), .items-table-row .item-total { display:none; }
+  .items-table-head { font-size:9px; }
+  .item-input { padding:6px 5px; font-size:13.5px; }
+}
 </style>
 </head>
 <body>
@@ -455,6 +637,10 @@ db.version(1).stores({
 });
 // Future versions can expand to normalized tables while migrating the blob.
 
+// Factory PIN for a fresh install. Existing installs keep whatever PIN they
+// already have; only new/reset data starts with this value.
+const DEFAULT_PIN = '2202';
+
 const Store = {
   KEY: 'crossed_threads_data_v1', // legacy localStorage key for migration
   data: null,
@@ -470,6 +656,7 @@ const Store = {
         invoicePrefix: 'INV-CT', nextInvoiceNo: 1,
         quotePrefix: 'QUO-CT', nextQuoteNo: 1,
         defaultTax: 18,
+        invoiceTemplate: 'classic',
         paymentDetails: 'MTN MoMo: 0704 808 819\nAirtel Money: 0704 808 819\nBank: Stanbic Bank — Acc: 902001XXXXXX',
         footerNotes: 'Thank you for choosing Crossed Threads. Crafted with precision — from your car to your couch. Goods once sold are not returnable. This invoice is valid for 30 days from the date of issue.',
         stamp: {
@@ -484,12 +671,49 @@ const Store = {
           dateColor: '#c82424'
         }
       },
-      security: { pin: '1234', enabled: true },
+      security: { pin: DEFAULT_PIN, enabled: true },
       invoices: [], quotes: [], customers: [], products: [], expenses: [], theme: 'dark',
+      lastBackupAt: null,
       auditLog: []
     };
   },
+  normalize() {
+    const def = this.defaultData();
+    if (!this.data || typeof this.data !== 'object') this.data = def;
+    this.data.business = { ...def.business, ...(this.data.business || {}) };
+    this.data.business.stamp = { ...def.business.stamp, ...(this.data.business.stamp || {}) };
+    this.data.security = { ...def.security, ...(this.data.security || {}) };
+    if (!/^\d{4,6}$/.test(String(this.data.security.pin || ''))) this.data.security.pin = DEFAULT_PIN;
+    if (this.data.security.recoveryHash && !/^[a-f0-9]{64}$/.test(String(this.data.security.recoveryHash))) {
+      delete this.data.security.recoveryHash;
+      delete this.data.security.recoveryCreatedAt;
+    }
+    ['invoices', 'quotes', 'customers', 'products', 'expenses', 'auditLog'].forEach((key) => {
+      if (!Array.isArray(this.data[key])) this.data[key] = [];
+    });
+    [...this.data.invoices, ...this.data.quotes].forEach((doc) => {
+      if (!Array.isArray(doc.items)) doc.items = [];
+      if (!Array.isArray(doc.payments)) doc.payments = [];
+      if (!doc.projectType) doc.projectType = inferProjectType(doc);
+    });
+    if (!['classic', 'modern'].includes(this.data.business.invoiceTemplate)) {
+      this.data.business.invoiceTemplate = 'classic';
+    }
+    // Workshop stages: infer a sensible starting point for older invoices.
+    this.data.invoices.forEach((doc) => {
+      if (!doc.stage || !JOB_STAGES.some((stage) => stage.key === doc.stage)) {
+        const paid = Number(doc.amountPaid) || 0;
+        const total = Number(doc.total) || 0;
+        doc.stage = total > 0 && paid >= total ? 'delivered' : paid > 0 ? 'deposit' : 'new';
+      }
+      if (!doc.stageUpdatedAt) doc.stageUpdatedAt = doc.createdAt || Date.now();
+    });
+    if (this.data.lastBackupAt === undefined) this.data.lastBackupAt = null;
+    if (!this.data.theme) this.data.theme = 'dark';
+    return this.data;
+  },
   async load() {
+    let needsPersist = false;
     try {
       // Prefer IndexedDB
       const row = await db.appState.get('main');
@@ -500,34 +724,32 @@ const Store = {
         const raw = localStorage.getItem(this.KEY);
         if (raw) {
           this.data = JSON.parse(raw);
-          await this.persist(); // write to IndexedDB
-          // Optionally clear legacy after successful migration
-          // localStorage.removeItem(this.KEY);
+          needsPersist = true;
         } else {
           this.data = this.defaultData();
           this.seedSampleData();
-          await this.persist();
+          needsPersist = true;
         }
       }
-      // Normalize / merge defaults
-      const def = this.defaultData();
-      this.data.business = { ...def.business, ...(this.data.business || {}) };
-      if (!this.data.business.stamp) this.data.business.stamp = def.business.stamp;
-      else this.data.business.stamp = { ...def.business.stamp, ...this.data.business.stamp };
-      if (!this.data.security) this.data.security = def.security;
-      else this.data.security = { ...def.security, ...this.data.security };
-      if (!this.data.invoices) this.data.invoices = [];
-      if (!this.data.quotes) this.data.quotes = [];
-      if (!this.data.customers) this.data.customers = [];
-      if (!this.data.products) this.data.products = [];
-      if (!this.data.expenses) this.data.expenses = [];
-      if (!this.data.auditLog) this.data.auditLog = [];
-      if (!this.data.theme) this.data.theme = 'dark';
     } catch (e) {
       console.error('Store load error', e);
-      this.data = this.defaultData();
-      this.seedSampleData();
+      // IndexedDB can be unavailable (private mode / storage pressure).
+      // Try the localStorage mirror before falling back to a blank app.
+      let restored = null;
+      try {
+        const raw = localStorage.getItem(this.KEY);
+        if (raw) restored = JSON.parse(raw);
+      } catch (_) { /* ignore */ }
+      if (restored && restored.business) {
+        this.data = restored;
+      } else {
+        this.data = this.defaultData();
+        this.seedSampleData();
+        needsPersist = true;
+      }
     }
+    this.normalize();
+    if (needsPersist) await this.persist();
     return this.data;
   },
   async persist() {
@@ -554,6 +776,7 @@ const Store = {
     const parsed = JSON.parse(jsonStr);
     if (!parsed || !parsed.data || !parsed.data.business) throw new Error('Invalid backup format');
     this.data = parsed.data;
+    this.normalize();
     await this.persist();
   },
   seedSampleData() {
@@ -654,6 +877,18 @@ function formatNumber(amount) {
   return num.toLocaleString('en-US', { minimumFractionDigits: hasDecimal ? 2 : 0, maximumFractionDigits: 2 });
 }
 
+// Compact money for dashboard tiles: UGX 2.4M instead of UGX 2,395,400.
+function formatCompactCurrency(amount, currency) {
+  currency = currency || (Store.data && Store.data.business.currency) || 'UGX';
+  const num = Number(amount) || 0;
+  try {
+    const formatted = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(num);
+    return `${currency} ${formatted}`;
+  } catch (_) {
+    return `${currency} ${Math.round(num).toLocaleString('en-US')}`;
+  }
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
@@ -669,7 +904,66 @@ function formatStampDate(dateStr) {
   return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-function todayStr() { return new Date().toISOString().slice(0, 10); }
+// Local calendar date (toISOString() is UTC and could show yesterday/tomorrow
+// for Kampala users near midnight).
+function todayStr() {
+  const d = new Date();
+  return dateToStr(d);
+}
+
+function getPinConfig() {
+  const security = (Store.data && Store.data.security) || { pin: DEFAULT_PIN, enabled: true };
+  const pin = String(security.pin || DEFAULT_PIN);
+  return {
+    pin,
+    length: Math.max(4, Math.min(6, pin.length)),
+    enabled: security.enabled !== false
+  };
+}
+
+// ==================== PIN recovery codes ====================
+// A 16-character code = 80 random bits. Only its SHA-256 hash is stored, so a
+// lost code cannot be recovered from the app data.
+const RECOVERY_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 chars, no I/O/0/1
+
+function generateRecoveryCode() {
+  const bytes = new Uint8Array(16);
+  window.crypto.getRandomValues(bytes);
+  let code = '';
+  for (let i = 0; i < bytes.length; i++) code += RECOVERY_ALPHABET[bytes[i] & 31];
+  return code;
+}
+
+function normalizeRecoveryCode(code) {
+  return String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+function formatRecoveryCode(code) {
+  const clean = normalizeRecoveryCode(code);
+  return clean.replace(/(.{4})(?=.)/g, '$1-');
+}
+
+async function hashRecoveryCode(code) {
+  const normalized = normalizeRecoveryCode(code);
+  const subtle = window.crypto && window.crypto.subtle;
+  if (!subtle) throw new Error('Secure https connection required for recovery codes');
+  const data = new TextEncoder().encode('crossed-threads-recovery-v1:' + normalized);
+  const digest = await subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function dateToStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function addDaysStr(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + Number(days || 0));
+  return dateToStr(d);
+}
 
 // ========== REVISION 2: Build a safe human-readable PDF filename ==========
 function buildPrintFilename(doc) {
@@ -717,6 +1011,112 @@ function statusBadgeClass(status) {
   }[status] || 'badge-draft';
 }
 
+// ==================== Workshop job stages ====================
+const JOB_STAGES = [
+  { key: 'new', label: 'New Job', short: 'New' },
+  { key: 'deposit', label: 'Deposit Paid', short: 'Deposit' },
+  { key: 'materials', label: 'Materials Ordered', short: 'Materials' },
+  { key: 'workshop', label: 'In Workshop', short: 'Workshop' },
+  { key: 'ready', label: 'Ready for Pickup', short: 'Ready' },
+  { key: 'delivered', label: 'Delivered', short: 'Delivered' }
+];
+
+function jobStageIndex(key) {
+  return Math.max(0, JOB_STAGES.findIndex(stage => stage.key === key));
+}
+
+function jobStageLabel(key) {
+  const stage = JOB_STAGES.find(item => item.key === key);
+  return stage ? stage.label : 'New Job';
+}
+
+function nextJobStage(key) {
+  const index = JOB_STAGES.findIndex(stage => stage.key === key);
+  return index >= 0 ? JOB_STAGES[index + 1] || null : JOB_STAGES[1];
+}
+
+function inferProjectType(doc) {
+  const text = `${doc.vehicleMake || ''} ${doc.vehicleModel || ''} ${doc.vehicleReg || ''}`.toLowerCase();
+  if (/boat|marine|yacht|vessel|outboard/.test(text)) return 'Boat';
+  if (/interior|curtain|blind|wall panel|headboard/.test(text)) return 'Custom Interior';
+  if (/sofa|chair|furniture|upholst|cushion|bed|ottoman|stool|settee/.test(text)) return 'Upholstery Project';
+  return 'Vehicle';
+}
+
+// Build a guaranteed single-page A4 PDF around one rendered JPEG.
+function buildSinglePagePdf(jpegBytes, imageWidth, imageHeight) {
+  const pageW = 595.28;
+  const pageH = 841.89;
+  const margin = 22.68; // 8 mm
+  const maxW = pageW - margin * 2;
+  const maxH = pageH - margin * 2;
+  const scale = Math.min(maxW / imageWidth, maxH / imageHeight);
+  const drawW = imageWidth * scale;
+  const drawH = imageHeight * scale;
+  const x = (pageW - drawW) / 2;
+  const y = (pageH - drawH) / 2;
+  const encoder = new TextEncoder();
+  const parts = [];
+  const offsets = [];
+  let position = 0;
+
+  const append = (data) => {
+    const bytes = typeof data === 'string' ? encoder.encode(data) : data;
+    parts.push(bytes);
+    position += bytes.length;
+  };
+  const beginObject = (number) => {
+    offsets[number] = position;
+    append(`${number} 0 obj\n`);
+  };
+  const endObject = () => append('\nendobj\n');
+
+  append('%PDF-1.4\n');
+  append(new Uint8Array([0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A]));
+
+  beginObject(1);
+  append('<< /Type /Catalog /Pages 2 0 R >>');
+  endObject();
+
+  beginObject(2);
+  append('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  endObject();
+
+  beginObject(3);
+  append(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW.toFixed(2)} ${pageH.toFixed(2)}] /Resources << /XObject << /Im0 4 0 R >> /ProcSet [/PDF /ImageC] >> /Contents 5 0 R >>`);
+  endObject();
+
+  beginObject(4);
+  append(`<< /Type /XObject /Subtype /Image /Width ${Math.round(imageWidth)} /Height ${Math.round(imageHeight)} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`);
+  append(jpegBytes);
+  append('\nendstream');
+  endObject();
+
+  const content = [
+    'q',
+    '1 1 1 rg',
+    `0 0 ${pageW.toFixed(2)} ${pageH.toFixed(2)} re f`,
+    'Q',
+    'q',
+    `${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)} cm`,
+    '/Im0 Do',
+    'Q',
+    ''
+  ].join('\n');
+  beginObject(5);
+  append(`<< /Length ${encoder.encode(content).length} >>\nstream\n${content}endstream`);
+  endObject();
+
+  const xrefOffset = position;
+  append('xref\n0 6\n');
+  append('0000000000 65535 f \n');
+  for (let i = 1; i <= 5; i++) {
+    append(String(offsets[i]).padStart(10, '0') + ' 00000 n \n');
+  }
+  append(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+  return new Blob(parts, { type: 'application/pdf' });
+}
+
 function escapeHTML(str) {
   if (str == null) return '';
   return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -738,8 +1138,32 @@ function crossedNeedlesSVG(size, color) {
   </svg>`;
 }
 
+// Logo for print/PDF capture. The badge is drawn inside the SVG so it renders
+// reliably in html2canvas (div background gradients were being dropped).
+function printLogoMark(size) {
+  size = size || 72;
+  const b = (Store.data && Store.data.business) || {};
+  if (b.logo) {
+    return `<img src="${b.logo}" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  }
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="50" fill="#a85f28"/>
+    <circle cx="50" cy="50" r="46.5" fill="none" stroke="#faf7f2" stroke-width="1.5"/>
+    <circle cx="50" cy="50" r="42.5" fill="none" stroke="#8a4a1e" stroke-width="1"/>
+    <g stroke="#faf7f2" stroke-width="4.4" stroke-linecap="round" fill="none">
+      <line x1="30" y1="30" x2="70" y2="70"/>
+      <line x1="70" y1="30" x2="30" y2="70"/>
+      <ellipse cx="30.5" cy="30.5" rx="2" ry="3.2" transform="rotate(45 30.5 30.5)" fill="#faf7f2" stroke="none"/>
+      <ellipse cx="69.5" cy="30.5" rx="2" ry="3.2" transform="rotate(-45 69.5 30.5)" fill="#faf7f2" stroke="none"/>
+      <path d="M 70 70 Q 76 74 73 78" stroke-width="2.6" opacity="0.8"/>
+      <path d="M 30 70 Q 24 74 27 78" stroke-width="2.6" opacity="0.8"/>
+    </g>
+  </svg>`;
+}
+
 // ==================== Crossed Threads Premium Stamp ====================
-function renderStampSVG(dateSource) {
+function renderStampSVG(dateSource, options) {
+  const simple = !!(options && options.simple);
   const stampConfig = (Store.data && Store.data.business && Store.data.business.stamp) || {
     enabled: true, header: 'CROSSED THREADS', location: 'BUZIGA · KAMPALA · UGANDA',
     phone: 'TEL: +256 704 808 819', dateMode: 'auto', customDate: '',
@@ -768,9 +1192,9 @@ function renderStampSVG(dateSource) {
 
   return `
   <div class="payment-stamp-wrapper" style="transform: rotate(${tilt}deg);">
-    <svg width="270" height="168" viewBox="0 0 280 174" xmlns="http://www.w3.org/2000/svg">
+    <svg width="190" height="118" viewBox="0 0 280 174" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <filter id="${uid}_distress" x="-15%" y="-15%" width="130%" height="130%">
+        ${simple ? '' : `<filter id="${uid}_distress" x="-15%" y="-15%" width="130%" height="130%">
           <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="4" result="noise" />
           <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.1" xChannelSelector="R" yChannelSelector="G" result="displaced" />
           <feGaussianBlur in="displaced" stdDeviation="0.22" result="soft" />
@@ -782,13 +1206,13 @@ function renderStampSVG(dateSource) {
           <circle cx="232" cy="136" r="5" fill="black" opacity="0.32" filter="blur(1px)"/>
           <circle cx="198" cy="32" r="3.5" fill="black" opacity="0.24"/>
           <circle cx="82" cy="140" r="4" fill="black" opacity="0.28"/>
-        </mask>
+        </mask>`}
         <path id="${uid}_topArc" d="M 28 88 A 118 66 0 0 1 252 88" fill="none"/>
         <path id="${uid}_botArc1" d="M 36 82 A 108 58 0 0 0 244 82" fill="none"/>
         <path id="${uid}_botArc2" d="M 20 94 A 122 70 0 0 0 260 94" fill="none"/>
       </defs>
 
-      <g filter="url(#${uid}_distress)" mask="url(#${uid}_mask)">
+      <g ${simple ? '' : `filter="url(#${uid}_distress)" mask="url(#${uid}_mask)"`}>
         <ellipse cx="140" cy="87" rx="132" ry="80" fill="none" stroke="${ink}"
           stroke-width="2.2" stroke-dasharray="7 4" stroke-linecap="round"/>
         <ellipse cx="140" cy="87" rx="121" ry="70" fill="none" stroke="${ink}" stroke-width="2.4"/>
@@ -843,33 +1267,206 @@ function toast(message) {
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.25s'; setTimeout(() => el.remove(), 250); }, 2200);
 }
 
+// The confirm callback used to be stringified into an inline onclick, which lost
+// its closure (id/doc/this were undefined) and silently broke every delete action.
+// Keep the real function in a variable and bind it with addEventListener instead.
+let _confirmAction = null;
+
 function showModal(html) {
+  _confirmAction = null;
   document.getElementById('modal-root').innerHTML = `<div class="modal-overlay" onclick="if(event.target===this) closeModal()"><div class="modal"><div class="modal-handle"></div>${html}</div></div>`;
 }
-function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
+function closeModal() {
+  _confirmAction = null;
+  document.getElementById('modal-root').innerHTML = '';
+}
 
-function confirmDialog(title, message, onConfirm) {
+function confirmDialog(title, message, onConfirm, opts) {
+  opts = opts || {};
+  const confirmLabel = opts.confirmLabel || 'Delete';
+  const cancelLabel = opts.cancelLabel || 'Cancel';
+  const danger = opts.danger !== false;
+  const requireText = (opts.requireText || '').toString();
   showModal(`
     <h3 class="modal-title">${escapeHTML(title)}</h3>
-    <p style="color:var(--text-secondary); margin:0 0 18px; font-size:14px;">${escapeHTML(message)}</p>
+    <p style="color:var(--text-secondary); margin:0 0 18px; font-size:14px; line-height:1.55; white-space:pre-line;">${escapeHTML(message)}</p>
+    ${requireText ? `<div class="form-group">
+      <label class="form-label">Type ${escapeHTML(requireText)} to confirm</label>
+      <input type="text" class="form-input" id="confirm-typed" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${escapeHTML(requireText)}">
+    </div>` : ''}
     <div style="display:flex; gap:8px;">
-      <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-danger" style="flex:1" onclick="closeModal(); (${onConfirm})();">Delete</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">${escapeHTML(cancelLabel)}</button>
+      <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" style="flex:1" id="confirm-dialog-ok" ${requireText ? 'disabled' : ''}>${escapeHTML(confirmLabel)}</button>
     </div>
   `);
+  _confirmAction = typeof onConfirm === 'function' ? onConfirm : null;
+  const okBtn = document.getElementById('confirm-dialog-ok');
+  if (!okBtn) return;
+  if (requireText) {
+    const typed = document.getElementById('confirm-typed');
+    if (typed) {
+      typed.addEventListener('input', () => {
+        okBtn.disabled = typed.value.trim().toUpperCase() !== requireText.toUpperCase();
+      });
+      setTimeout(() => typed.focus(), 60);
+    }
+  }
+  okBtn.addEventListener('click', async () => {
+    const action = _confirmAction;
+    closeModal();
+    if (!action) return;
+    try {
+      await action();
+    } catch (e) {
+      console.error('Confirmed action failed', e);
+      toast('Something went wrong — please try again');
+    }
+  });
 }
+
+// ==================== PWA / Add to Home Screen ====================
+const APP_VERSION = '1.5.0';
+
+function compareVersions(a, b) {
+  const pa = String(a || '0').split('.').map(v => parseInt(v, 10) || 0);
+  const pb = String(b || '0').split('.').map(v => parseInt(v, 10) || 0);
+  const length = Math.max(pa.length, pb.length);
+  for (let i = 0; i < length; i++) {
+    const diff = (pa[i] || 0) - (pb[i] || 0);
+    if (diff !== 0) return diff > 0 ? 1 : -1;
+  }
+  return 0;
+}
+
+const Install = {
+  deferredPrompt: null,
+  installed: false,
+
+  get standalone() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.navigator.standalone === true;
+  },
+
+  get isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  },
+
+  get platformHint() {
+    if (this.isIOS) return 'iPhone / iPad: tap the Share button, then “Add to Home Screen”.';
+    if (/android/i.test(navigator.userAgent)) return 'Android: tap Install, or use the browser menu → “Install app” / “Add to Home screen”.';
+    return 'Desktop: click the install icon in the address bar, or the browser menu → “Install Crossed Threads”.';
+  },
+
+  init() {
+    this.installed = this.standalone;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      const banner = document.getElementById('install-banner');
+      if (banner) banner.style.display = 'flex';
+    });
+    window.addEventListener('appinstalled', () => {
+      this.installed = true;
+      this.deferredPrompt = null;
+      toast('App installed — launch it from your home screen');
+      if (App.state.view === 'home' || App.state.view === 'settings') App.render();
+    });
+  },
+
+  showBanner() {
+    if (this.installed) return false;
+    try { if (localStorage.getItem('ct_install_dismissed') === '1') return false; } catch (_) { /* ignore */ }
+    return true;
+  },
+
+  dismiss() {
+    try { localStorage.setItem('ct_install_dismissed', '1'); } catch (_) { /* ignore */ }
+    const banner = document.getElementById('install-banner');
+    if (banner) banner.remove();
+  },
+
+  bannerHtml() {
+    if (!this.showBanner()) return '';
+    return `<div class="install-banner" id="install-banner">
+      <div class="install-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="2" width="12" height="20" rx="3"/><line x1="11" y1="18" x2="13" y2="18"/>
+        </svg>
+      </div>
+      <div class="install-text">
+        <div class="install-title">Add Crossed Threads to your home screen</div>
+        <div class="install-desc">Full-screen, offline invoicing — works like a native app.</div>
+      </div>
+      <button class="install-cta" onclick="Install.prompt()">Install</button>
+      <button class="install-dismiss" onclick="Install.dismiss()" aria-label="Dismiss install banner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+  },
+
+  async prompt() {
+    if (this.standalone) { toast('Already running as an installed app'); return; }
+    if (this.deferredPrompt) {
+      const evt = this.deferredPrompt;
+      this.deferredPrompt = null;
+      evt.prompt();
+      try {
+        const choice = await evt.userChoice;
+        if (choice && choice.outcome === 'accepted') toast('Installing app…');
+        else toast('Install cancelled — try again from Settings');
+      } catch (_) { /* ignore */ }
+      return;
+    }
+    this.showInstructions();
+  },
+
+  showInstructions() {
+    const ios = this.isIOS;
+    const android = /android/i.test(navigator.userAgent);
+    const steps = ios
+      ? `<li>Tap the <strong>Share</strong> button (square with an upward arrow).</li>
+         <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+         <li>Tap <strong>Add</strong> — the app icon appears on your home screen.</li>`
+      : android
+        ? `<li>Open the browser menu (three dots, top-right).</li>
+           <li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+           <li>Confirm — Crossed Threads opens like a normal app.</li>`
+        : `<li>Click the <strong>install</strong> icon in the browser address bar.</li>
+           <li>Or open the browser menu and choose <strong>Install Crossed Threads</strong>.</li>
+           <li>Confirm — the app opens in its own window.</li>`;
+    showModal(`
+      <h3 class="modal-title">Add to Home Screen</h3>
+      <p style="color:var(--text-secondary); margin:0 0 16px; font-size:14px;">
+        Install Crossed Threads as an app — it opens full screen and keeps working offline.
+      </p>
+      <div class="card" style="padding:14px 16px; margin-bottom:10px">
+        <div style="font-weight:700; font-size:14px; margin-bottom:8px">${ios ? 'On iPhone / iPad (Safari)' : android ? 'On Android (Chrome)' : 'On desktop (Chrome / Edge)'}</div>
+        <ol style="margin:0; padding-left:20px; font-size:13px; color:var(--text-secondary); line-height:1.8">
+          ${steps}
+        </ol>
+      </div>
+      <p style="font-size:11px; color:var(--text-tertiary); margin:0 0 16px;">
+        The app must be opened from its https address (GitHub Pages) — installing from a local file is not supported.
+      </p>
+      <button class="btn btn-secondary btn-block" onclick="closeModal()">Got it</button>
+    `);
+  }
+};
 
 // ==================== App ====================
 const App = {
-  state: { view: 'home', params: {}, invoiceTab: 'invoices', filter: 'all', search: '', pinInput: '' },
+  state: { view: 'home', params: {}, invoiceTab: 'invoices', filter: 'all', search: '', pinInput: '', homePeriod: 'month', productTab: 'active', updateInfo: null },
 
   isLocked() {
-    const sec = (Store.data && Store.data.security) || { pin: '1234', enabled: true };
+    const sec = (Store.data && Store.data.security) || { pin: DEFAULT_PIN, enabled: true };
     if (sec.enabled === false) return false;
     return sessionStorage.getItem('crossed_threads_unlocked') !== 'true';
   },
 
   async init() {
+    Install.init();
     // Request persistent storage to reduce eviction risk
     if (navigator.storage && navigator.storage.persist) {
       try {
@@ -880,8 +1477,30 @@ const App = {
     // Register Service Worker (handles GitHub Pages subpaths via relative URLs)
     if ('serviceWorker' in navigator) {
       try {
-        const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+        const hadController = !!navigator.serviceWorker.controller;
+        let updatePrompted = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (this._manualUpdate) return;
+          if (!hadController || updatePrompted) return;
+          updatePrompted = true;
+          confirmDialog(
+            'Update Available',
+            'A new version of Crossed Threads is ready. Reload now to use it? Saved invoices and settings are not affected.',
+            () => location.reload(),
+            { confirmLabel: 'Reload', danger: false, cancelLabel: 'Later' }
+          );
+        });
+        const reg = await navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' });
         console.log('SW registered', reg.scope);
+        reg.addEventListener('updatefound', () => {
+          const worker = reg.installing;
+          if (!worker) return;
+          worker.addEventListener('statechange', () => {
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+              toast('Update ready — reopen the app to finish');
+            }
+          });
+        });
       } catch (e) { console.warn('SW registration failed', e); }
     }
     await Store.load();
@@ -889,7 +1508,9 @@ const App = {
     this.setupKeypadListener();
     this.setupLogoInput();
     if (this.isLocked()) this.renderLockScreen();
-    else this.render();
+    else { this.render(); this.handleLaunchHash(); }
+    this.checkForUpdatesSilently();
+    window.addEventListener('online', () => this.checkForUpdatesSilently());
     window.addEventListener('popstate', (e) => {
       if (this.isLocked()) { this.renderLockScreen(); return; }
       if (e.state && e.state.view) {
@@ -936,6 +1557,8 @@ const App = {
     const logoHtml = b.logo
       ? `<img src="${b.logo}" alt="logo" style="width:100%;height:100%;object-fit:cover;">`
       : crossedNeedlesSVG(32, '#fff');
+    const pinConfig = getPinConfig();
+    const pinLength = pinConfig.length;
     const pinLen = (this.state.pinInput || '').length;
 
     app.innerHTML = `
@@ -948,11 +1571,9 @@ const App = {
           <p style="font-size:10px; color:var(--accent); margin:0 0 20px; text-transform:uppercase; letter-spacing:2px; font-weight:600;">Automotive · Upholstery · Furniture</p>
 
           <div class="pin-dots" id="pin-dots-container">
-            <div class="pin-dot ${pinLen >= 1 ? 'filled' : ''}"></div>
-            <div class="pin-dot ${pinLen >= 2 ? 'filled' : ''}"></div>
-            <div class="pin-dot ${pinLen >= 3 ? 'filled' : ''}"></div>
-            <div class="pin-dot ${pinLen >= 4 ? 'filled' : ''}"></div>
+            ${Array.from({ length: pinLength }, (_, i) => `<div class="pin-dot ${pinLen > i ? 'filled' : ''}"></div>`).join('')}
           </div>
+          <p style="font-size:10px; color:var(--text-tertiary); margin:-16px 0 20px;">${pinLength}-digit PIN</p>
 
           <div class="pin-keypad">
             ${[1,2,3,4,5,6,7,8,9].map(num => `<button class="pin-key" onclick="App.pressPin('${num}')">${num}</button>`).join('')}
@@ -960,6 +1581,8 @@ const App = {
             <button class="pin-key" onclick="App.pressPin('0')">0</button>
             <button class="pin-key" style="font-size:16px;" onclick="App.pressPin('DEL')">⌫</button>
           </div>
+
+          <button class="forgot-pin" onclick="App.openRecoveryModal()">Forgot PIN?</button>
 
           <div style="margin-top:24px; font-size:10px; color:var(--text-tertiary); letter-spacing:2.5px; text-transform:uppercase;">
             ✦ Crafted Comfort · Crossed Threads ✦
@@ -970,29 +1593,31 @@ const App = {
   },
 
   pressPin(key) {
+    const pinConfig = getPinConfig();
+    const pinLength = pinConfig.length;
     if (!this.state.pinInput) this.state.pinInput = '';
     if (key === 'C') this.state.pinInput = '';
     else if (key === 'DEL') this.state.pinInput = this.state.pinInput.slice(0, -1);
     else if (typeof key === 'string' && key.length === 1 && key >= '0' && key <= '9') {
-      if (this.state.pinInput.length < 4) this.state.pinInput += key;
+      if (this.state.pinInput.length < pinLength) this.state.pinInput += key;
     }
 
     const dotsContainer = document.getElementById('pin-dots-container');
     if (dotsContainer) {
       const dots = dotsContainer.children;
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < dots.length; i++) {
         if (i < this.state.pinInput.length) dots[i].classList.add('filled');
         else dots[i].classList.remove('filled');
       }
     }
 
-    if (this.state.pinInput.length === 4) {
-      const sec = (Store.data && Store.data.security) || { pin: '1234' };
-      if (this.state.pinInput === (sec.pin || '1234')) {
+    if (this.state.pinInput.length === pinLength) {
+      if (this.state.pinInput === pinConfig.pin) {
         sessionStorage.setItem('crossed_threads_unlocked', 'true');
         this.state.pinInput = '';
         toast('Unlocked');
         this.render();
+        this.handleLaunchHash();
       } else {
         if (dotsContainer) {
           dotsContainer.classList.add('shake');
@@ -1034,6 +1659,7 @@ const App = {
   },
 
   render() {
+    if (this.isLocked()) { this.renderLockScreen(); return; }
     const app = document.getElementById('app');
     let html = '';
     switch (this.state.view) {
@@ -1051,6 +1677,8 @@ const App = {
       default: html = this.renderHome();
     }
     app.innerHTML = html;
+    if (this.state.view === 'settings') this.updateStorageInfo();
+    if (this.state.view === 'invoice-form') this.recalcTotals();
   },
 
   bottomNav(active) {
@@ -1078,16 +1706,270 @@ const App = {
     return `<div class="empty-state">${icon}<p style="font-weight:600;color:var(--text)">${title}</p><p>${desc}</p>${btnLabel?`<button class="btn btn-primary btn-sm" onclick="${btnAction}">${btnLabel}</button>`:''}</div>`;
   },
 
+  // ==================== Home dashboard helpers ====================
+  setHomePeriod(period) {
+    if (!['today', 'month', 'last-month', 'year'].includes(period)) return;
+    this.state.homePeriod = period;
+    this.render();
+  },
+
+  inPeriod(dateStr, period) {
+    if (!dateStr) return false;
+    let d;
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateStr));
+    if (match) d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    else d = new Date(dateStr);
+    if (isNaN(d.getTime())) return false;
+    const now = new Date();
+    if (period === 'today') return dateToStr(d) === todayStr();
+    if (period === 'month') return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    if (period === 'last-month') {
+      const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return d.getFullYear() === prev.getFullYear() && d.getMonth() === prev.getMonth();
+    }
+    if (period === 'year') return d.getFullYear() === now.getFullYear();
+    return true;
+  },
+
+  homeMetrics(period) {
+    const invoices = (Store.data.invoices || []).filter(doc => calculateStatus(doc) !== 'cancelled');
+    let invoiced = 0, invoiceCount = 0, collected = 0, paymentCount = 0, expenses = 0, expenseCount = 0;
+    invoices.forEach(doc => {
+      if (this.inPeriod(doc.date, period)) {
+        invoiced += Number(doc.total) || 0;
+        invoiceCount++;
+      }
+      const payments = Array.isArray(doc.payments) ? doc.payments : [];
+      if (payments.length > 0) {
+        payments.forEach(payment => {
+          if (this.inPeriod(payment.date || doc.date, period)) {
+            collected += Number(payment.amount) || 0;
+            paymentCount++;
+          }
+        });
+      } else if (this.inPeriod(doc.date, period)) {
+        const paid = Number(doc.amountPaid) || 0;
+        if (paid > 0) { collected += paid; paymentCount++; }
+      }
+    });
+    (Store.data.expenses || []).forEach(expense => {
+      const dateStr = expense.date || (expense.createdAt ? dateToStr(new Date(expense.createdAt)) : '');
+      if (this.inPeriod(dateStr, period)) {
+        expenses += Number(expense.amount) || 0;
+        expenseCount++;
+      }
+    });
+    let outstanding = 0, overdueCount = 0, overdueAmount = 0;
+    invoices.forEach(doc => {
+      const balance = Math.max(0, (Number(doc.total) || 0) - (Number(doc.amountPaid) || 0));
+      outstanding += balance;
+      if (calculateStatus(doc) === 'overdue') {
+        overdueCount++;
+        overdueAmount += balance;
+      }
+    });
+    return {
+      invoiced, invoiceCount, collected, paymentCount, expenses, expenseCount,
+      profit: invoiced - expenses, outstanding, overdueCount, overdueAmount
+    };
+  },
+
+  attentionItems(metrics) {
+    const items = [];
+    const updateInfo = this.state.updateInfo;
+    if (updateInfo && compareVersions(updateInfo.version, APP_VERSION) > 0) {
+      items.push({
+        key: 'update',
+        tone: 'var(--accent)', bg: 'var(--accent-bg)',
+        title: `Update available — v${updateInfo.version}`,
+        sub: 'Tap to see what’s new and reload',
+        amount: '',
+        action: `App.showUpdateDialog(App.state.updateInfo)`
+      });
+    }
+    if (metrics.overdueCount > 0) {
+      items.push({
+        key: 'overdue',
+        tone: 'var(--danger)', bg: 'var(--danger-bg)',
+        title: `${metrics.overdueCount} overdue invoice${metrics.overdueCount === 1 ? '' : 's'}`,
+        sub: 'Tap to review and chase payment',
+        amount: formatCompactCurrency(metrics.overdueAmount),
+        action: `App.showOverdue()`
+      });
+    }
+    const staleQuotes = (Store.data.quotes || []).filter(quote => {
+      const status = calculateStatus(quote);
+      if (status !== 'sent' && status !== 'draft') return false;
+      return quote.createdAt && (Date.now() - quote.createdAt) > 7 * 86400000;
+    });
+    if (staleQuotes.length > 0) {
+      const value = staleQuotes.reduce((sum, quote) => sum + (Number(quote.total) || 0), 0);
+      items.push({
+        key: 'quotes',
+        tone: 'var(--accent)', bg: 'var(--accent-bg)',
+        title: `${staleQuotes.length} quote${staleQuotes.length === 1 ? '' : 's'} awaiting follow-up`,
+        sub: 'Sent more than a week ago',
+        amount: formatCompactCurrency(value),
+        action: `App.showQuotes()`
+      });
+    }
+    const dueJobs = this.activeJobs().filter(job => job.dueDate && job.dueDate <= addDaysStr(3));
+    if (dueJobs.length > 0) {
+      items.push({
+        key: 'jobs',
+        tone: 'var(--warning)', bg: 'var(--warning-bg)',
+        title: `${dueJobs.length} job${dueJobs.length === 1 ? '' : 's'} due within 3 days`,
+        sub: 'Check the workshop schedule',
+        amount: '',
+        action: `App.scrollToJobs()`
+      });
+    }
+    const lastBackup = Number(Store.data.lastBackupAt) || 0;
+    const backupAgeDays = lastBackup ? Math.floor((Date.now() - lastBackup) / 86400000) : null;
+    if (!lastBackup || backupAgeDays >= 7) {
+      items.push({
+        key: 'backup',
+        tone: 'var(--info)', bg: 'var(--info-bg)',
+        title: 'Back up your data',
+        sub: lastBackup
+          ? `Last backup ${backupAgeDays === 0 ? 'today' : backupAgeDays + ' day' + (backupAgeDays === 1 ? '' : 's') + ' ago'}`
+          : 'No backup yet — data lives only on this phone',
+        amount: '',
+        action: `App.downloadBackup()`
+      });
+    }
+    const pinConfig = getPinConfig();
+    if (pinConfig.enabled && (pinConfig.pin === DEFAULT_PIN || pinConfig.pin === '1234')) {
+      items.push({
+        key: 'pin',
+        tone: 'var(--danger)', bg: 'var(--danger-bg)',
+        title: `Your PIN is still ${pinConfig.pin}`,
+        sub: 'Change it to 4–6 digits in Settings → Security',
+        amount: '',
+        action: `App.navigate('settings')`
+      });
+    }
+    const security = Store.data.security || {};
+    if (security.pin && security.pin !== DEFAULT_PIN && security.pin !== '1234' && !security.recoveryHash) {
+      items.push({
+        key: 'recovery',
+        tone: 'var(--info)', bg: 'var(--info-bg)',
+        title: 'Create a PIN recovery code',
+        sub: 'Needed if you ever forget your PIN',
+        amount: '',
+        action: `App.navigate('settings')`
+      });
+    }
+    return items;
+  },
+
+  activeJobs() {
+    return (Store.data.invoices || [])
+      .filter(doc => calculateStatus(doc) !== 'cancelled')
+      .filter(doc => (doc.stage || 'new') !== 'delivered')
+      .sort((a, b) => (a.dueDate || '9999-12-31').localeCompare(b.dueDate || '9999-12-31') || (b.createdAt || 0) - (a.createdAt || 0));
+  },
+
+  attentionIcon(key) {
+    const icons = {
+      overdue: '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>',
+      quotes: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+      jobs: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+      backup: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+      pin: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+      recovery: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6"/><path d="M15.5 7.5l3 3L22 7l-3-3"/>',
+      update: '<path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>'
+    };
+    return `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icons[key] || icons.overdue}</svg>`;
+  },
+
+  showOverdue() {
+    this.state.invoiceTab = 'invoices';
+    this.state.filter = 'overdue';
+    this.state.search = '';
+    this.navigate('invoices');
+  },
+
+  showOutstanding() {
+    this.state.invoiceTab = 'invoices';
+    this.state.filter = 'outstanding';
+    this.state.search = '';
+    this.navigate('invoices');
+  },
+
+  showQuotes() {
+    this.state.invoiceTab = 'quotes';
+    this.state.filter = 'all';
+    this.state.search = '';
+    this.navigate('invoices');
+  },
+
+  scrollToJobs() {
+    const el = document.getElementById('home-jobs');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+
+  setJobStage(docId, stage) {
+    const doc = Store.data.invoices.find(d => d.id === docId);
+    if (!doc) return;
+    if (!JOB_STAGES.some(item => item.key === stage)) return;
+    doc.stage = stage;
+    doc.stageUpdatedAt = Date.now();
+    Store.save();
+    toast(`Job moved to ${jobStageLabel(stage)}`);
+    this.render();
+  },
+
+  advanceJob(docId) {
+    const doc = Store.data.invoices.find(d => d.id === docId);
+    if (!doc) return;
+    const next = nextJobStage(doc.stage || 'new');
+    if (!next) { toast('This job is already delivered'); return; }
+    this.setJobStage(docId, next.key);
+  },
+
+  projectMakeLabel(type) {
+    if (type === 'Vehicle') return 'Vehicle';
+    if (type === 'Boat') return 'Boat';
+    return 'Project';
+  },
+
+  onProjectTypeChange() {
+    const select = document.getElementById('project-type');
+    if (!select) return;
+    const type = select.value;
+    const makeLabelEl = document.getElementById('veh-make-label');
+    if (makeLabelEl) makeLabelEl.textContent = this.projectMakeLabel(type);
+    const placeholders = {
+      Vehicle: 'e.g. Toyota',
+      Boat: 'e.g. Yamaha',
+      'Upholstery Project': 'e.g. 3-Seater Sofa',
+      'Custom Interior': 'e.g. Master Bedroom'
+    };
+    const makeInput = document.getElementById('veh-make');
+    if (makeInput) makeInput.placeholder = placeholders[type] || 'Name';
+    const modelInput = document.getElementById('veh-model');
+    if (modelInput) {
+      modelInput.placeholder = type === 'Vehicle' ? 'e.g. Land Cruiser V8'
+        : type === 'Boat' ? 'e.g. 242 Limited S'
+        : 'e.g. Premium Velvet';
+    }
+  },
+
   // ==================== Home ====================
   renderHome() {
     const business = Store.data.business;
+    const period = this.state.homePeriod || 'month';
+    const metrics = this.homeMetrics(period);
+    const attention = this.attentionItems(metrics);
+    const jobs = this.activeJobs();
     const invoices = Store.data.invoices;
-    let collected = 0, owed = 0;
-    invoices.forEach(inv => { collected += Number(inv.amountPaid) || 0; owed += Math.max(0, (Number(inv.total) - Number(inv.amountPaid))); });
     const recent = [...invoices].sort((a,b) => b.createdAt - a.createdAt).slice(0, 5);
     const logoHtml = business.logo
       ? `<img src="${business.logo}" alt="logo">`
       : crossedNeedlesSVG(22, '#fff');
+    const periodLabels = { today: 'Today', month: 'This Month', 'last-month': 'Last Month', year: 'This Year' };
+    const profitClass = metrics.profit < 0 ? 'danger' : 'success';
     return `<div class="page">
       <div class="page-header">
         <div class="topbar">
@@ -1104,41 +1986,115 @@ const App = {
         </div>
       </div>
       <div class="page-body">
+        ${Install.bannerHtml()}
         <div style="text-align:center; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:12px; font-weight:600;">Automotive · Upholstery · Furniture</div>
-        <div class="stats-block">
-          <div class="stat-row">
-            <div>
-              <div class="stat-label">Collected</div>
-              <div class="stat-value success">${formatCurrency(collected)}</div>
-            </div>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="1.5" opacity="0.5"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+
+        <div class="chips period-chips">
+          ${Object.keys(periodLabels).map(key => `<button class="chip ${period === key ? 'active' : ''}" onclick="App.setHomePeriod('${key}')">${periodLabels[key]}</button>`).join('')}
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-tile">
+            <div class="kpi-label">Invoiced</div>
+            <div class="kpi-value">${formatCompactCurrency(metrics.invoiced)}</div>
+            <div class="kpi-sub">${metrics.invoiceCount} invoice${metrics.invoiceCount === 1 ? '' : 's'}</div>
           </div>
-          <div class="stat-row">
-            <div>
-              <div class="stat-label">Owed To You</div>
-              <div class="stat-value warning">${formatCurrency(owed)}</div>
-            </div>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="1.5" opacity="0.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div class="kpi-tile">
+            <div class="kpi-label">Collected</div>
+            <div class="kpi-value success">${formatCompactCurrency(metrics.collected)}</div>
+            <div class="kpi-sub">${metrics.paymentCount} payment${metrics.paymentCount === 1 ? '' : 's'}</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Expenses</div>
+            <div class="kpi-value warning">${formatCompactCurrency(metrics.expenses)}</div>
+            <div class="kpi-sub">${metrics.expenseCount} record${metrics.expenseCount === 1 ? '' : 's'}</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Profit</div>
+            <div class="kpi-value ${profitClass}">${formatCompactCurrency(metrics.profit)}</div>
+            <div class="kpi-sub">invoiced − expenses</div>
           </div>
         </div>
-        <div class="action-grid">
-          <button class="action-card new-invoice" onclick="App.newDocument('invoice')">
-            <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-            <div><div class="label">New Invoice</div><div class="desc">Create & send</div></div>
+
+        <div class="receivables-row">
+          <button class="receivable" onclick="App.showOutstanding()">
+            <span><span class="r-label">Outstanding</span><span class="r-value">${formatCompactCurrency(metrics.outstanding)}</span></span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
-          <button class="action-card new-quote" onclick="App.newDocument('quote')">
-            <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-            <div><div class="label">New Quote</div><div class="desc">Estimate pricing</div></div>
-          </button>
-          <button class="action-card record-payment" onclick="App.navigate('record-payment')">
-            <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></div>
-            <div><div class="label">Record Payment</div><div class="desc">Log received money</div></div>
-          </button>
-          <button class="action-card my-invoices" onclick="App.navigate('invoices')">
-            <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg></div>
-            <div><div class="label">My Invoices</div><div class="desc">${invoices.length} total</div></div>
+          <button class="receivable danger" onclick="App.showOverdue()">
+            <span><span class="r-label">Overdue</span><span class="r-value">${formatCompactCurrency(metrics.overdueAmount)}</span></span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Needs Attention</div>
+            ${attention.length ? `<span style="font-size:11px; color:var(--text-tertiary); font-weight:600;">${attention.length} item${attention.length === 1 ? '' : 's'}</span>` : ''}
+          </div>
+          ${attention.length === 0
+            ? `<div class="attention-clear"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> All clear — no overdue invoices, quotes or jobs due.</div>`
+            : `<div class="attention-list">
+                ${attention.map(item => `<button class="attention-item" onclick="${item.action}">
+                  <span class="attention-icon" style="color:${item.tone};background:${item.bg}">${this.attentionIcon(item.key)}</span>
+                  <span class="attention-body">
+                    <span class="attention-title">${escapeHTML(item.title)}</span>
+                    <span class="attention-sub">${escapeHTML(item.sub)}</span>
+                  </span>
+                  ${item.amount ? `<span class="attention-amount" style="color:${item.tone}">${item.amount}</span>` : ''}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>`).join('')}
+              </div>`}
+        </div>
+
+        ${jobs.length ? `<div class="section" id="home-jobs">
+          <div class="section-head">
+            <div class="section-title">Jobs in Progress</div>
+            <button class="section-link" onclick="App.navigate('invoices')">All jobs</button>
+          </div>
+          ${jobs.slice(0, 4).map(job => {
+            const stage = job.stage || 'new';
+            const next = nextJobStage(stage);
+            const overdue = job.dueDate && job.dueDate < todayStr();
+            const balance = Math.max(0, (Number(job.total) || 0) - (Number(job.amountPaid) || 0));
+            const vehicle = [job.vehicleMake, job.vehicleModel].filter(Boolean).join(' ');
+            return `<div class="card job-card">
+              <div class="job-head" onclick="App.navigate('invoice-detail', {id: '${job.id}'})" style="cursor:pointer">
+                <div style="min-width:0">
+                  <div class="job-number">${escapeHTML(job.number)} <span class="badge badge-stage">${jobStageLabel(stage)}</span></div>
+                  <div class="job-meta">${escapeHTML(job.customerName || 'Walk-in')}${vehicle ? ' · ' + escapeHTML(vehicle) : ''}</div>
+                  <div class="job-due ${overdue ? 'danger' : ''}">${job.dueDate ? (overdue ? 'Was due ' : 'Due ') + formatDate(job.dueDate) : 'No due date'}</div>
+                </div>
+                <div class="job-amount">${formatCompactCurrency(balance)}<div style="font-size:9px;color:var(--text-tertiary);font-weight:600">balance</div></div>
+              </div>
+              ${next ? `<button class="btn btn-secondary btn-sm job-advance" onclick="App.advanceJob('${job.id}')">Move to ${next.short} →</button>` : ''}
+            </div>`;
+          }).join('')}
+          ${jobs.length > 4 ? `<button class="btn btn-secondary btn-sm btn-block mt-8" onclick="App.navigate('invoices')">View all ${jobs.length} jobs</button>` : ''}
+        </div>` : ''}
+
+        <div class="section">
+          <div class="section-head"><div class="section-title">Quick Actions</div></div>
+          <div class="action-grid">
+            <button class="action-card new-invoice" onclick="App.newDocument('invoice')">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              <div><div class="label">New Invoice</div><div class="desc">Create & send</div></div>
+            </button>
+            <button class="action-card new-quote" onclick="App.newDocument('quote')">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+              <div><div class="label">New Quote</div><div class="desc">Estimate pricing</div></div>
+            </button>
+            <button class="action-card record-payment" onclick="App.navigate('record-payment')">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></div>
+              <div><div class="label">Record Payment</div><div class="desc">Log received money</div></div>
+            </button>
+            <button class="action-card my-invoices" onclick="App.openExpenseModal()">
+              <div class="icon" style="background:var(--warning); color:#14100d"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 2v20l2-1.5L8 22l2-1.5L12 22l2-1.5L16 22l2-1.5L20 22V2l-2 1.5L16 2l-2 1.5L12 2l-2 1.5L8 2 6 3.5z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+              <div><div class="label">Add Expense</div><div class="desc">Track costs</div></div>
+            </button>
+          </div>
+        </div>
+
         <div class="section">
           <div class="section-head">
             <div class="section-title">Recent Activity</div>
@@ -1153,14 +2109,20 @@ const App = {
 
   invoiceCard(inv) {
     const status = calculateStatus(inv);
+    const isQuote = inv.type === 'quote';
     return `<div class="card" onclick="App.navigate('invoice-detail', {id: '${inv.id}'})">
       <div class="invoice-item">
         <div class="invoice-item-info">
           <div class="invoice-item-number">${escapeHTML(inv.number)} <span class="badge ${statusBadgeClass(status)}">${statusLabel(status)}</span></div>
           <div class="invoice-item-meta">${escapeHTML(inv.customerName || 'Walk-in')}</div>
-          <div class="invoice-item-date">${formatDate(inv.date)}</div>
+          <div class="invoice-item-date">${formatDate(inv.date)}${!isQuote && inv.stage && inv.stage !== 'delivered' ? ' · ' + jobStageLabel(inv.stage) : ''}</div>
         </div>
-        <div class="invoice-item-amount">${formatCurrency(inv.total)}</div>
+        <div class="invoice-item-right">
+          <div class="invoice-item-amount">${formatCurrency(inv.total)}</div>
+          <button class="row-delete" onclick="event.stopPropagation();App.confirmDeleteDoc('${inv.id}')" aria-label="Delete ${isQuote ? 'quote' : 'invoice'} ${escapeHTML(inv.number || '')}" title="Delete">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
       </div>
     </div>`;
   },
@@ -1176,6 +2138,7 @@ const App = {
       const status = calculateStatus(d);
       if (filter === 'all') {}
       else if (filter === 'unpaid') { if (status !== 'sent' && status !== 'overdue') return false; }
+      else if (filter === 'outstanding') { if (status === 'paid' || status === 'cancelled') return false; }
       else if (filter === 'partly') { if (status !== 'partly') return false; }
       else if (filter === 'paid') { if (status !== 'paid') return false; }
       else if (filter === 'overdue') { if (status !== 'overdue') return false; }
@@ -1192,8 +2155,8 @@ const App = {
     });
     filtered.sort((a,b) => b.createdAt - a.createdAt);
 
-    const filters = ['all','unpaid','partly','paid','overdue','this-month'];
-    const filterLabels = { all:'All', unpaid:'Not Paid', partly:'Partly Paid', paid:'Paid', overdue:'Overdue', 'this-month':'This Month' };
+    const filters = ['all','unpaid','outstanding','partly','paid','overdue','this-month'];
+    const filterLabels = { all:'All', unpaid:'Not Paid', outstanding:'Outstanding', partly:'Partly Paid', paid:'Paid', overdue:'Overdue', 'this-month':'This Month' };
 
     return `<div class="page">
       <div class="page-header">
@@ -1229,6 +2192,7 @@ const App = {
       const status = calculateStatus(d);
       if (filter === 'all') {}
       else if (filter === 'unpaid') { if (status !== 'sent' && status !== 'overdue') return false; }
+      else if (filter === 'outstanding') { if (status === 'paid' || status === 'cancelled') return false; }
       else if (filter === 'partly') { if (status !== 'partly') return false; }
       else if (filter === 'paid') { if (status !== 'paid') return false; }
       else if (filter === 'overdue') { if (status !== 'overdue') return false; }
@@ -1266,7 +2230,7 @@ const App = {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             Back
           </button>
-          <button class="icon-btn" onclick="App.confirmDeleteDoc('${doc.id}')" aria-label="Delete">
+          <button class="icon-btn" onclick="App.confirmDeleteDoc('${doc.id}')" aria-label="Delete ${isQuote ? 'quote' : 'invoice'}" title="Delete">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>
@@ -1277,8 +2241,9 @@ const App = {
             <div>
               <div style="font-size:18px; font-weight:700">${escapeHTML(doc.number)}</div>
               <div style="font-size:13px; color:var(--text-secondary)">${escapeHTML(doc.customerName || 'Walk-in customer')}</div>
+              <div style="font-size:11px; color:var(--text-tertiary); margin-top:3px;">${escapeHTML(doc.projectType || 'Vehicle')}${doc.vehicleMake ? ' · ' + escapeHTML(doc.vehicleMake) : ''}${doc.vehicleModel ? ' · ' + escapeHTML(doc.vehicleModel) : ''}${doc.vehicleReg ? ' · ' + escapeHTML(doc.vehicleReg) : ''}</div>
             </div>
-            <span class="badge ${statusBadgeClass(status)} ${isQuote?'badge-quote':''}">${isQuote ? 'QUOTE' : statusLabel(status)}</span>
+            <span class="badge ${isQuote ? 'badge-quote' : statusBadgeClass(status)}">${statusLabel(status)}</span>
           </div>
           <div style="font-size:12px; color:var(--text-secondary); margin-top:8px">
             Issued: ${formatDate(doc.date)}${doc.dueDate ? ` · Due: ${formatDate(doc.dueDate)}` : ''}
@@ -1309,9 +2274,9 @@ const App = {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download PDF
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="App.shareWhatsApp('${doc.id}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            WhatsApp
+          <button class="btn btn-secondary btn-sm" onclick="App.openShareSheet('${doc.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
           </button>
           <button class="btn btn-secondary btn-sm" onclick="App.shareEmail('${doc.id}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -1334,10 +2299,34 @@ const App = {
           <button class="btn btn-danger btn-block btn-sm mb-16" onclick="App.cancelInvoice('${doc.id}')">Cancel Invoice</button>
         ` : ''}
 
+        <button class="btn btn-danger btn-block btn-sm mb-16" onclick="App.confirmDeleteDoc('${doc.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Delete ${isQuote ? 'Quote' : 'Invoice'} Permanently
+        </button>
+
+        ${!isQuote && status !== 'cancelled' ? (() => {
+          const stageIndex = jobStageIndex(doc.stage || 'new');
+          return `<div class="section">
+            <div class="section-head">
+              <div class="section-title">Job Progress</div>
+              <span style="font-size:11px; color:var(--text-tertiary);">Tap a step to update</span>
+            </div>
+            <div class="card" style="padding:16px 10px 12px">
+              <div class="stage-track">
+                ${JOB_STAGES.map((stage, i) => `<button class="stage-step ${i < stageIndex ? 'done' : ''} ${i === stageIndex ? 'current' : ''}" onclick="App.setJobStage('${doc.id}', '${stage.key}')" aria-label="Set stage: ${stage.label}">
+                  <span class="stage-dot"></span>
+                  <span class="stage-name">${stage.short}</span>
+                </button>`).join('')}
+              </div>
+              ${doc.stageUpdatedAt ? `<div class="stage-updated">Updated ${formatDate(dateToStr(new Date(doc.stageUpdatedAt)))}</div>` : ''}
+            </div>
+          </div>`;
+        })() : ''}
+
         <div class="section">
           <div class="section-head"><div class="section-title">Items</div></div>
           <div class="card" style="padding:14px 16px">
-            ${doc.items.map((item, i) => `
+            ${(doc.items || []).map((item, i) => `
               <div style="display:flex; justify-content:space-between; padding:8px 0; ${i>0?'border-top:1px solid var(--border-light);':''}">
                 <div style="flex:1">
                   <div style="font-weight:600; font-size:14px">${escapeHTML(item.description)}</div>
@@ -1406,12 +2395,14 @@ const App = {
     const number = doc ? doc.number : `${prefix}${String(nextNo).padStart(4, '0')}`;
 
     const today = doc ? doc.date : todayStr();
-    const dueDate = doc ? doc.dueDate : new Date(Date.now() + 14*86400000).toISOString().slice(0,10);
+    const dueDate = doc ? doc.dueDate : addDaysStr(14);
 
     const customer = doc ? { id: doc.customerId, name: doc.customerName, phone: doc.customerPhone, email: doc.customerEmail, address: doc.customerAddress } : null;
     const items = doc ? doc.items : [{ description: '', qty: 1, price: 0, total: 0 }];
     const taxRate = doc ? doc.taxRate : business.defaultTax;
     const notes = doc ? doc.notes : '';
+    const projectType = doc ? (doc.projectType || 'Vehicle') : 'Vehicle';
+    const makeLabel = this.projectMakeLabel(projectType);
 
     return `<div class="page">
       <div class="page-header">
@@ -1445,12 +2436,26 @@ const App = {
         </div>
 
         <div class="form-group">
-          <label class="form-label">Vehicle / Project Reference</label>
+          <label class="form-label">Project Type</label>
+          <select class="form-select" id="project-type" onchange="App.onProjectTypeChange()">
+            ${['Vehicle', 'Boat', 'Upholstery Project', 'Custom Interior'].map(type => `<option value="${type}" ${projectType === type ? 'selected' : ''}>${type}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Project Reference</label>
           <div class="form-row">
-            <input type="text" class="form-input" id="veh-make" placeholder="Make / Project (e.g. Toyota)" value="${escapeHTML(doc ? (doc.vehicleMake||'') : '')}">
-            <input type="text" class="form-input" id="veh-model" placeholder="Model / Type (e.g. Land Cruiser)" value="${escapeHTML(doc ? (doc.vehicleModel||'') : '')}">
+            <div>
+              <label class="form-label" id="veh-make-label">${makeLabel}</label>
+              <input type="text" class="form-input" id="veh-make" placeholder="Name" value="${escapeHTML(doc ? (doc.vehicleMake||'') : '')}">
+            </div>
+            <div>
+              <label class="form-label" id="veh-model-label">Model</label>
+              <input type="text" class="form-input" id="veh-model" placeholder="Model / Type" value="${escapeHTML(doc ? (doc.vehicleModel||'') : '')}">
+            </div>
           </div>
-          <input type="text" class="form-input" id="veh-reg" placeholder="Registration / Ref (e.g. UBA 123X)" style="margin-top:8px; text-transform:uppercase" value="${escapeHTML(doc ? (doc.vehicleReg||'') : '')}">
+          <label class="form-label" id="veh-reg-label" style="margin-top:8px">Ref / Reg</label>
+          <input type="text" class="form-input" id="veh-reg" placeholder="Registration / Ref (e.g. UBA 123X)" style="text-transform:uppercase" value="${escapeHTML(doc ? (doc.vehicleReg||'') : '')}">
         </div>
 
         <div class="form-row">
@@ -1641,6 +2646,7 @@ const App = {
       customerName = 'Walk-in customer';
     }
 
+    const projectType = document.getElementById('project-type').value;
     const vehicleMake = document.getElementById('veh-make').value.trim();
     const vehicleModel = document.getElementById('veh-model').value.trim();
     const vehicleReg = document.getElementById('veh-reg').value.trim().toUpperCase();
@@ -1676,7 +2682,7 @@ const App = {
       const idx = list.findIndex(d => d.id === editId);
       if (idx >= 0) {
         const existing = list[idx];
-        list[idx] = { ...existing, number, customerId, customerName, customerPhone, customerEmail, customerAddress, vehicleMake, vehicleModel, vehicleReg, date, dueDate, items, taxRate, subtotal, tax, total, notes, balance: total - existing.amountPaid };
+        list[idx] = { ...existing, number, customerId, customerName, customerPhone, customerEmail, customerAddress, projectType, vehicleMake, vehicleModel, vehicleReg, date, dueDate, items, taxRate, subtotal, tax, total, notes, balance: Math.max(0, total - (Number(existing.amountPaid) || 0)) };
         Store.save();
         toast(isQuote ? 'Quote updated' : 'Invoice updated');
         this.navigate('invoice-detail', { id: editId });
@@ -1685,10 +2691,11 @@ const App = {
       const newDoc = {
         id: uid(), number, type: isQuote ? 'quote' : 'invoice',
         customerId, customerName, customerPhone, customerEmail, customerAddress,
-        vehicleMake, vehicleModel, vehicleReg,
+        projectType, vehicleMake, vehicleModel, vehicleReg,
         date, dueDate, items, taxRate, subtotal, tax, total,
         amountPaid: 0, balance: total, status: isQuote ? 'draft' : 'sent',
-        notes, payments: [], createdAt: Date.now()
+        notes, payments: [], createdAt: Date.now(),
+        ...(isQuote ? {} : { stage: 'new', stageUpdatedAt: Date.now() })
       };
       if (isQuote) {
         Store.data.quotes.push(newDoc);
@@ -1708,6 +2715,19 @@ const App = {
     this.state.view = 'invoice-form';
     history.pushState({ view: this.state.view, params: this.state.params }, '', '#new-' + type);
     this.render();
+  },
+
+  // Supports the manifest shortcuts (New Invoice / New Quote) and deep links.
+  handleLaunchHash() {
+    let hash = '';
+    try { hash = decodeURIComponent((location.hash || '').replace(/^#/, '')).toLowerCase(); } catch (_) { hash = ''; }
+    if (!hash) return false;
+    if (hash === 'new-invoice') { this.newDocument('invoice'); return true; }
+    if (hash === 'new-quote') { this.newDocument('quote'); return true; }
+    if (hash === 'invoices') { this.navigate('invoices'); return true; }
+    if (hash === 'settings') { this.navigate('settings'); return true; }
+    if (hash === 'home') { this.navigate('home'); return true; }
+    return false;
   },
 
   // ==================== Customers ====================
@@ -1747,7 +2767,7 @@ const App = {
   },
 
   customerCard(c) {
-    const invoices = Store.data.invoices.filter(i => i.customerId === c.id);
+    const invoices = Store.data.invoices.filter(i => i.customerId === c.id && calculateStatus(i) !== 'cancelled');
     const balance = invoices.reduce((s,i) => s + Math.max(0, (Number(i.total)||0) - (Number(i.amountPaid)||0)), 0);
     return `<div class="card" onclick="App.navigate('customer-detail', {id: '${c.id}'})">
       <div class="list-item">
@@ -1770,9 +2790,10 @@ const App = {
     if (!c) return `<div class="page"><div class="page-body">${this.emptyState('Not found','Customer not found','Go Back','App.navigate(\'customers\')')}</div></div>`;
     const invoices = Store.data.invoices.filter(i => i.customerId === c.id).sort((a,b) => b.createdAt - a.createdAt);
     const quotes = Store.data.quotes.filter(q => q.customerId === c.id).sort((a,b) => b.createdAt - a.createdAt);
-    const totalSpent = invoices.reduce((s,i) => s + (Number(i.total)||0), 0);
-    const balance = invoices.reduce((s,i) => s + Math.max(0, (Number(i.total)||0) - (Number(i.amountPaid)||0)), 0);
-    const collected = invoices.reduce((s,i) => s + (Number(i.amountPaid)||0), 0);
+    const activeInvoices = invoices.filter(i => calculateStatus(i) !== 'cancelled');
+    const totalSpent = activeInvoices.reduce((s,i) => s + (Number(i.total)||0), 0);
+    const balance = activeInvoices.reduce((s,i) => s + Math.max(0, (Number(i.total)||0) - (Number(i.amountPaid)||0)), 0);
+    const collected = activeInvoices.reduce((s,i) => s + (Number(i.amountPaid)||0), 0);
 
     return `<div class="page">
       <div class="page-header">
@@ -1781,9 +2802,14 @@ const App = {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             Back
           </button>
-          <button class="icon-btn" onclick="App.navigate('customer-form', {id: '${c.id}'})">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
+          <div style="display:flex; gap:8px">
+            <button class="icon-btn" onclick="App.confirmDeleteCustomer('${c.id}')" aria-label="Delete customer" title="Delete customer">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+            <button class="icon-btn" onclick="App.navigate('customer-form', {id: '${c.id}'})" aria-label="Edit customer" title="Edit customer">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
         </div>
       </div>
       <div class="page-body">
@@ -1907,9 +2933,35 @@ const App = {
     }
   },
 
+  confirmDeleteCustomer(id) {
+    const c = Store.data.customers.find(x => x.id === id);
+    if (!c) { toast('Customer not found'); return; }
+    const invCount = Store.data.invoices.filter(i => i.customerId === id).length;
+    const quoteCount = Store.data.quotes.filter(q => q.customerId === id).length;
+    const docsNote = (invCount + quoteCount) > 0
+      ? ` ${invCount} invoice(s) and ${quoteCount} quote(s) will be kept, but no longer linked to this customer.`
+      : '';
+    confirmDialog(
+      'Delete Customer',
+      `${c.name} will be permanently removed from your customer list.${docsNote}`,
+      async () => {
+        Store.data.customers = Store.data.customers.filter(x => x.id !== id);
+        // Documents keep the name/phone snapshot taken when they were created.
+        [...Store.data.invoices, ...Store.data.quotes].forEach(d => {
+          if (d.customerId === id) d.customerId = '';
+        });
+        await Store.persist();
+        toast('Customer deleted');
+        this.state.search = '';
+        this.navigate('customers');
+      },
+      { confirmLabel: 'Delete Customer' }
+    );
+  },
+
   // ==================== Payment ====================
   renderRecordPayment() {
-    const unpaidInvoices = Store.data.invoices.filter(i => (Number(i.amountPaid)||0) < (Number(i.total)||0));
+    const unpaidInvoices = Store.data.invoices.filter(i => calculateStatus(i) !== 'cancelled' && (Number(i.amountPaid)||0) < (Number(i.total)||0));
     return `<div class="page">
       <div class="page-header">
         <div class="topbar">
@@ -1944,6 +2996,7 @@ const App = {
   openPaymentModal(docId) {
     const doc = Store.data.invoices.find(i => i.id === docId);
     if (!doc) return;
+    if (calculateStatus(doc) === 'cancelled') { toast('This invoice is cancelled'); return; }
     const balance = doc.total - doc.amountPaid;
     const today = todayStr();
     showModal(`
@@ -1996,8 +3049,15 @@ const App = {
   savePayment(docId) {
     const doc = Store.data.invoices.find(i => i.id === docId);
     if (!doc) return;
-    const amount = parseFloat(document.getElementById('pay-amount').value) || 0;
+    if (calculateStatus(doc) === 'cancelled') { toast('This invoice is cancelled'); return; }
+    const amount = Math.round((parseFloat(document.getElementById('pay-amount').value) || 0) * 100) / 100;
     if (amount <= 0) { toast('Enter a valid amount'); return; }
+    const balanceDue = Math.max(0, (Number(doc.total) || 0) - (Number(doc.amountPaid) || 0));
+    if (balanceDue <= 0) { toast('This invoice is already fully paid'); return; }
+    if (amount > balanceDue + 0.005) {
+      toast(`Amount is more than the balance due (${formatCurrency(balanceDue)})`);
+      return;
+    }
     const date = document.getElementById('pay-date').value;
     const method = document.getElementById('pay-method').value;
     const note = document.getElementById('pay-note').value.trim();
@@ -2016,26 +3076,51 @@ const App = {
   deletePayment(docId, idx) {
     const doc = Store.data.invoices.find(i => i.id === docId);
     if (!doc || !doc.payments || !doc.payments[idx]) return;
-    confirmDialog('Delete Payment', 'Remove this payment record? This cannot be undone.', () => {
-      const p = doc.payments[idx];
-      doc.amountPaid = Math.max(0, (Number(doc.amountPaid)||0) - p.amount);
+    const payment = doc.payments[idx];
+    confirmDialog('Delete Payment', `Remove the ${formatCurrency(payment.amount)} payment? This cannot be undone.`, async () => {
+      doc.amountPaid = Math.max(0, (Number(doc.amountPaid) || 0) - payment.amount);
       doc.balance = Math.max(0, doc.total - doc.amountPaid);
       doc.status = calculateStatus(doc);
       doc.payments.splice(idx, 1);
-      Store.save();
+      await Store.persist();
       toast('Payment removed');
       this.render();
     });
   },
 
   confirmDeleteDoc(id) {
-    confirmDialog('Delete Document', 'This document will be permanently deleted.', () => {
-      Store.data.invoices = Store.data.invoices.filter(d => d.id !== id);
-      Store.data.quotes = Store.data.quotes.filter(d => d.id !== id);
-      Store.save();
-      toast('Deleted');
-      this.navigate('invoices');
-    });
+    const doc = [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === id);
+    if (!doc) { toast('Document not found'); return; }
+    const isQuote = doc.type === 'quote';
+    const label = doc.number || (isQuote ? 'This quotation' : 'This invoice');
+    const customer = doc.customerName || 'Walk-in customer';
+    confirmDialog(
+      isQuote ? 'Delete Quote' : 'Delete Invoice',
+      `${label} for ${customer} will be permanently deleted. This cannot be undone.`,
+      async () => {
+        Store.data.invoices = Store.data.invoices.filter(d => d.id !== id);
+        Store.data.quotes = Store.data.quotes.filter(d => d.id !== id);
+        // Keep cross-references consistent after a deletion.
+        Store.data.quotes.forEach(q => {
+          if (q.convertedToInvoiceId === id) {
+            delete q.convertedToInvoiceId;
+            if (q.status === 'accepted') q.status = 'sent';
+          }
+        });
+        const quoteIds = new Set(Store.data.quotes.map(q => q.id));
+        Store.data.invoices.forEach(inv => {
+          if (inv.fromQuoteId && !quoteIds.has(inv.fromQuoteId)) delete inv.fromQuoteId;
+        });
+        await Store.persist();
+        toast(isQuote ? 'Quote deleted' : 'Invoice deleted');
+        this.state.invoiceTab = isQuote ? 'quotes' : 'invoices';
+        this.state.filter = 'all';
+        this.state.search = '';
+        this.state.params = {};
+        this.navigate('invoices');
+      },
+      { confirmLabel: 'Delete Permanently' }
+    );
   },
 
   // ==================== Print Invoice (Crossed Threads Premium Design) ====================
@@ -2048,9 +3133,7 @@ const App = {
     const status = calculateStatus(doc);
     const fileName = buildPrintFilename(doc);
 
-    const logoHtml = b.logo
-      ? `<img src="${b.logo}" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-      : crossedNeedlesSVG(42, '#faf7f2');
+    const logoHtml = printLogoMark(72);
 
     const statusBanner = !isQuote ? `
       <div class="ct-status-banner ${
@@ -2059,7 +3142,7 @@ const App = {
         'ct-status-unpaid'
       }">${statusLabel(status)}</div>` : `<div class="ct-status-banner ct-status-quote">QUOTATION</div>`;
 
-    const itemsHtml = doc.items.map(item => `
+    const itemsHtml = (doc.items || []).map(item => `
       <tr>
         <td>${escapeHTML(item.description)}</td>
         <td>${item.qty}</td>
@@ -2068,11 +3151,14 @@ const App = {
       </tr>
     `).join('');
 
-    const vehicleHtml = (doc.vehicleMake || doc.vehicleModel || doc.vehicleReg) ? `
-      <div class="ct-project-row"><span class="ct-project-label">Vehicle</span><span class="ct-project-value">${escapeHTML(doc.vehicleMake || '—')}</span></div>
+    const projectType = doc.projectType || 'Vehicle';
+    const makeLabel = this.projectMakeLabel(projectType);
+    const vehicleHtml = `
+      <div class="ct-project-row"><span class="ct-project-label">Type</span><span class="ct-project-value">${escapeHTML(projectType)}</span></div>
+      <div class="ct-project-row"><span class="ct-project-label">${makeLabel}</span><span class="ct-project-value">${escapeHTML(doc.vehicleMake || '—')}</span></div>
       <div class="ct-project-row"><span class="ct-project-label">Model</span><span class="ct-project-value">${escapeHTML(doc.vehicleModel || '—')}</span></div>
       <div class="ct-project-row"><span class="ct-project-label">Ref / Reg</span><span class="ct-project-value">${escapeHTML(doc.vehicleReg || '—')}</span></div>
-    ` : `<div class="ct-project-row"><span class="ct-project-value">—</span></div>`;
+    `;
 
     const paymentsHtml = (!isQuote && doc.payments && doc.payments.length > 0) ? `
       <div class="ct-pay-history">
@@ -2081,7 +3167,7 @@ const App = {
       </div>
     ` : '';
 
-    const printHtml = `
+    const printHtml = b.invoiceTemplate === 'modern' ? this.buildModernInvoiceHtml(doc) : `
       <div class="invoice-print">
         <div class="ct-watermark">CROSSED THREADS</div>
 
@@ -2118,7 +3204,7 @@ const App = {
             </div>
           </div>
           <div class="ct-panel">
-            <div class="ct-panel-label">Vehicle / Project</div>
+            <div class="ct-panel-label">Project Details</div>
             ${vehicleHtml}
           </div>
         </div>
@@ -2170,9 +3256,9 @@ const App = {
               <div class="ct-payment-title">Payment Details</div>
               <div class="ct-payment-body">${escapeHTML(b.paymentDetails)}</div>
             </div>
-            ${renderStampSVG(doc.date)}
+            ${renderStampSVG(doc.date, { simple: true })}
           </div>
-        ` : `<div style="display:flex; justify-content:flex-end; margin-bottom:16px;">${renderStampSVG(doc.date)}</div>`}
+        ` : `<div style="display:flex; justify-content:flex-end; margin-bottom:16px;">${renderStampSVG(doc.date, { simple: true })}</div>`}
 
         ${doc.notes ? `
           <div class="ct-notes">
@@ -2215,7 +3301,16 @@ const App = {
   renderSettings() {
     const b = Store.data.business;
     const stmp = b.stamp || {};
-    const sec = Store.data.security || { pin: '1234', enabled: true };
+    const sec = Store.data.security || { pin: DEFAULT_PIN, enabled: true };
+    const counts = this.dataCounts();
+    const weakPin = sec.pin === DEFAULT_PIN || sec.pin === '1234' || String(sec.pin || '').length <= 4;
+    const pinStrengthLabel = sec.pin === DEFAULT_PIN
+      ? 'Factory default — change it'
+      : sec.pin === '1234' ? 'Weak PIN — change it' : `${String(sec.pin || '').length} digits`;
+    const updateInfo = this.state.updateInfo || null;
+    const lastChecked = updateInfo && updateInfo.checkedAt
+      ? `${new Date(updateInfo.checkedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} · ${formatDate(dateToStr(new Date(updateInfo.checkedAt)))}`
+      : 'Not checked yet';
     const logoHtml = b.logo ? `<img src="${b.logo}" alt="logo">` : `<span class="placeholder" style="color:var(--accent);">${crossedNeedlesSVG(26, 'currentColor')}</span>`;
     return `<div class="page">
       <div class="page-header">
@@ -2233,6 +3328,26 @@ const App = {
               <span style="font-size:13px; color:var(--text-secondary);">${sec.enabled !== false ? 'Active' : 'Disabled'}</span>
             </label>
           </div>
+          <div class="settings-item">
+            <div class="settings-item-label">PIN Strength</div>
+            <span class="settings-item-value" style="color:${weakPin ? 'var(--warning)' : 'var(--success)'};">
+              ${pinStrengthLabel}
+            </span>
+          </div>
+          ${weakPin ? `<p class="danger-note" style="padding:0 16px 12px; color:var(--warning);">Use 5–6 digits for a stronger PIN. The factory default ${DEFAULT_PIN} is public — set your own, avoid 1234, birth years and phone numbers.</p>` : ''}
+          <div class="settings-item">
+            <div class="settings-item-label">Recovery Code</div>
+            <span class="settings-item-value" style="color:${sec.recoveryHash ? 'var(--success)' : 'var(--warning)'};">
+              ${sec.recoveryHash
+                ? 'Set' + (sec.recoveryCreatedAt ? ' · ' + formatDate(dateToStr(new Date(sec.recoveryCreatedAt))) : '')
+                : 'Not set'}
+            </span>
+          </div>
+          <div class="settings-item is-action" onclick="App.openRecoveryCodeSettings()">
+            <div class="settings-item-label">${sec.recoveryHash ? 'Replace Recovery Code' : 'Create Recovery Code'}</div>
+            <span class="settings-item-value">${sec.recoveryHash ? 'Replace ›' : 'Create ›'}</span>
+          </div>
+          <p class="danger-note" style="padding:0 16px 12px;">Use this code if you forget your PIN. It is shown only once — save it with your backup.</p>
           <div class="settings-item" onclick="App.openChangePinModal()" style="cursor:pointer">
             <div class="settings-item-label">Change Passcode / PIN</div>
             <span style="font-size:13px; color:var(--accent); font-weight:600;">Change</span>
@@ -2241,6 +3356,34 @@ const App = {
             <div class="settings-item-label" style="color:var(--warning);">Lock App Now</div>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Install App</div>
+          <div class="settings-item">
+            <div class="settings-item-label">Home Screen App</div>
+            <span class="settings-item-value ${Install.installed ? '' : 'danger'}">${Install.installed ? 'Installed ✓' : 'Not installed'}</span>
+          </div>
+          ${Install.installed ? `
+            <div class="settings-item" style="flex-direction:column; align-items:stretch; gap:4px;">
+              <div class="settings-item-label">Running as an installed app</div>
+              <p class="danger-note">Crossed Threads launches full screen and works offline. Data stays on this device — keep regular backups.</p>
+            </div>
+          ` : `
+            <div class="settings-item" style="flex-direction:column; align-items:stretch; gap:10px;">
+              <button class="btn btn-primary btn-block" onclick="Install.prompt()">Add to Home Screen</button>
+              <p class="danger-note">${Install.platformHint}</p>
+            </div>
+          `}
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Invoice Template</div>
+          <div class="theme-options">
+            <button class="theme-option ${b.invoiceTemplate !== 'modern' ? 'active' : ''}" onclick="App.setInvoiceTemplate('classic')">Classic</button>
+            <button class="theme-option ${b.invoiceTemplate === 'modern' ? 'active' : ''}" onclick="App.setInvoiceTemplate('modern')">Modern</button>
+          </div>
+          <p class="danger-note" style="padding:0 16px 14px;">Classic is your original brown &amp; gold layout. Modern is a navy &amp; gold corporate layout. The choice applies to print, PDF and sharing.</p>
         </div>
 
         <div class="settings-section">
@@ -2368,7 +3511,7 @@ const App = {
 
         <div class="settings-section">
           <div class="settings-section-title">Catalogue & Expenses</div>
-          <div class="settings-item" onclick="App.navigate('products')" style="cursor:pointer">
+          <div class="settings-item" onclick="App.state.search='';App.state.productTab='active';App.navigate('products')" style="cursor:pointer">
             <div class="settings-item-label">Products & Services</div>
             <span style="font-size:13px; color:var(--accent); font-weight:600;">Open →</span>
           </div>
@@ -2388,11 +3531,39 @@ const App = {
             <div class="settings-item-label">Persistent Storage</div>
             <span class="settings-item-value" id="persist-status">Checking…</span>
           </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Last Backup</div>
+            <span class="settings-item-value" id="last-backup-value">${Store.data.lastBackupAt ? formatDate(dateToStr(new Date(Store.data.lastBackupAt))) : 'Never'}</span>
+          </div>
           <div class="settings-item" style="flex-direction:column; align-items:stretch; gap:10px;">
             <button class="btn btn-secondary btn-sm" onclick="App.downloadBackup()">Download Backup (JSON)</button>
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('restore-input').click()">Restore from Backup</button>
             <input type="file" id="restore-input" accept="application/json,.json" style="display:none" onchange="App.handleRestoreFile(event)">
-            <p style="font-size:11px; color:var(--text-tertiary); margin:0;">All data stays on this device. Backup regularly. Restore will overwrite current data after confirmation.</p>
+            <p class="danger-note">All data stays on this device. Backup regularly — restoring overwrites current data after confirmation.</p>
+          </div>
+        </div>
+
+        <div class="settings-section" style="border-color:var(--danger);">
+          <div class="settings-section-title" style="color:var(--danger);">Delete Data</div>
+          <div class="settings-item is-action" onclick="App.clearData('documents')">
+            <div class="settings-item-label">Invoices & Quotes</div>
+            <span class="settings-item-value">${counts.invoices} invoice${counts.invoices === 1 ? '' : 's'} · ${counts.quotes} quote${counts.quotes === 1 ? '' : 's'} ›</span>
+          </div>
+          <div class="settings-item is-action" onclick="App.clearData('customers')">
+            <div class="settings-item-label">Customers</div>
+            <span class="settings-item-value">${counts.customers} ›</span>
+          </div>
+          <div class="settings-item is-action" onclick="App.clearData('products')">
+            <div class="settings-item-label">Catalogue (Products & Services)</div>
+            <span class="settings-item-value">${counts.products} ›</span>
+          </div>
+          <div class="settings-item is-action" onclick="App.clearData('expenses')">
+            <div class="settings-item-label">Expenses</div>
+            <span class="settings-item-value">${counts.expenses} ›</span>
+          </div>
+          <div class="settings-item" style="flex-direction:column; align-items:stretch; gap:10px;">
+            <button class="btn btn-danger btn-block" onclick="App.eraseAllData()">Delete All App Data</button>
+            <p class="danger-note">Permanently erases every invoice, quote, customer, product, expense and setting on this device. The app resets to a fresh install (default PIN ${DEFAULT_PIN}). This cannot be undone.</p>
           </div>
         </div>
 
@@ -2405,6 +3576,30 @@ const App = {
           </div>
         </div>
 
+        <div class="settings-section">
+          <div class="settings-section-title">About</div>
+          <div class="settings-item">
+            <div class="settings-item-label">App Version</div>
+            <span class="settings-item-value">v${APP_VERSION} · Offline ready</span>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Latest Release</div>
+            <span class="settings-item-value">${updateInfo ? 'v' + escapeHTML(updateInfo.version) : 'Not checked'}</span>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">Last Checked</div>
+            <span class="settings-item-value">${lastChecked}</span>
+          </div>
+          <div class="settings-item is-action" onclick="App.checkForUpdates()">
+            <div class="settings-item-label">Check for Updates</div>
+            <span class="settings-item-value">Check now ›</span>
+          </div>
+          <div class="settings-item is-action" onclick="App.openWhatsNew()">
+            <div class="settings-item-label">What's New</div>
+            <span class="settings-item-value">Release notes ›</span>
+          </div>
+        </div>
+
         <div style="text-align:center; padding:20px; color:var(--text-tertiary); font-size:11px; letter-spacing:1.5px;">
           ✦ CROSSED THREADS ✦<br>
           <span style="font-size:10px;">CRAFTED COMFORT · FROM YOUR CAR TO YOUR COUCH</span>
@@ -2413,8 +3608,6 @@ const App = {
       </div>
       ${this.bottomNav('settings')}
     </div>`;
-    // Populate storage stats asynchronously
-    setTimeout(() => this.updateStorageInfo(), 50);
   },
 
   async updateStorageInfo() {
@@ -2434,17 +3627,233 @@ const App = {
     } catch (e) { /* ignore */ }
   },
 
+  dataCounts() {
+    const d = Store.data || {};
+    return {
+      invoices: (d.invoices || []).length,
+      quotes: (d.quotes || []).length,
+      customers: (d.customers || []).length,
+      products: (d.products || []).length,
+      expenses: (d.expenses || []).length
+    };
+  },
+
+  clearData(kind) {
+    const n = this.dataCounts();
+    const configs = {
+      documents: {
+        total: n.invoices + n.quotes,
+        title: 'Delete Invoices & Quotes',
+        message: `Permanently delete ${n.invoices} invoice(s) and ${n.quotes} quote(s)? Numbering restarts at 1. Customers, catalogue items and expenses are kept. This cannot be undone.`,
+        confirmLabel: 'Delete Documents',
+        apply: () => {
+          Store.data.invoices = [];
+          Store.data.quotes = [];
+          Store.data.business.nextInvoiceNo = 1;
+          Store.data.business.nextQuoteNo = 1;
+        },
+        done: 'Invoices and quotes deleted'
+      },
+      customers: {
+        total: n.customers,
+        title: 'Delete Customers',
+        message: `Permanently delete all ${n.customers} customer(s)? Existing invoices keep their name and contact details, but will no longer be linked to a customer.`,
+        confirmLabel: 'Delete Customers',
+        apply: () => {
+          Store.data.customers = [];
+          [...Store.data.invoices, ...Store.data.quotes].forEach(d => { d.customerId = ''; });
+        },
+        done: 'Customers deleted'
+      },
+      products: {
+        total: n.products,
+        title: 'Delete Catalogue',
+        message: `Permanently delete all ${n.products} catalogue item(s)? Existing invoices are not affected.`,
+        confirmLabel: 'Delete Catalogue',
+        apply: () => { Store.data.products = []; },
+        done: 'Catalogue cleared'
+      },
+      expenses: {
+        total: n.expenses,
+        title: 'Delete Expenses',
+        message: `Permanently delete all ${n.expenses} expense record(s)? This cannot be undone.`,
+        confirmLabel: 'Delete Expenses',
+        apply: () => { Store.data.expenses = []; },
+        done: 'Expenses deleted'
+      }
+    };
+    const cfg = configs[kind];
+    if (!cfg) return;
+    if (!cfg.total) { toast('Nothing to delete'); return; }
+    confirmDialog(cfg.title, cfg.message, async () => {
+      cfg.apply();
+      await Store.persist();
+      toast(cfg.done);
+      this.render();
+    }, { confirmLabel: cfg.confirmLabel });
+  },
+
+  eraseAllData() {
+    const n = this.dataCounts();
+    confirmDialog(
+      'Delete All App Data',
+      `This permanently deletes ${n.invoices} invoice(s), ${n.quotes} quote(s), ${n.customers} customer(s), ${n.products} catalogue item(s) and ${n.expenses} expense(s), plus business details, logo, stamp settings and your PIN. The app returns to a fresh install with the default PIN ${DEFAULT_PIN}. Download a backup first if you need this data.`,
+      async () => {
+        Store.data = Store.defaultData();
+        // Never re-seed demo data after an explicit erase.
+        Store.data.invoices = [];
+        Store.data.quotes = [];
+        Store.data.customers = [];
+        Store.data.products = [];
+        Store.data.expenses = [];
+        await Store.persist();
+        // Remove any localStorage mirror/legacy snapshot so erased data cannot resurface.
+        try {
+          localStorage.removeItem(Store.KEY);
+          localStorage.removeItem('ct_install_dismissed');
+        } catch (_) { /* ignore */ }
+        try { sessionStorage.setItem('crossed_threads_unlocked', 'true'); } catch (_) { /* ignore */ }
+        this.state.view = 'home';
+        this.state.params = {};
+        this.state.invoiceTab = 'invoices';
+        this.state.filter = 'all';
+        this.state.search = '';
+        this.state.pinInput = '';
+        this.applyTheme();
+        toast('All app data deleted');
+        this.navigate('home');
+      },
+      { confirmLabel: 'Delete Everything', requireText: 'DELETE' }
+    );
+  },
+
+  async fetchReleaseInfo() {
+    const response = await fetch(`./version.json?check=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`version.json HTTP ${response.status}`);
+    const info = await response.json();
+    if (!info || !info.version) throw new Error('Invalid version.json');
+    return info;
+  },
+
+  async checkForUpdatesSilently() {
+    try {
+      const info = await this.fetchReleaseInfo();
+      this.state.updateInfo = { ...info, checkedAt: Date.now() };
+      if (!this.isLocked() && compareVersions(info.version, APP_VERSION) > 0 && (this.state.view === 'home' || this.state.view === 'settings')) {
+        this.render();
+      }
+    } catch (e) {
+      console.warn('Update check skipped:', e.message || e);
+    }
+  },
+
+  async checkForUpdates() {
+    toast('Checking for updates…');
+    let info = null;
+    try {
+      info = await this.fetchReleaseInfo();
+    } catch (e) {
+      console.warn('Update check failed:', e);
+    }
+    if (!info) {
+      toast('Could not check online — reloading app');
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) await reg.update();
+      } catch (_) { /* ignore */ }
+      setTimeout(() => location.reload(), 700);
+      return;
+    }
+    this.state.updateInfo = { ...info, checkedAt: Date.now() };
+    if (compareVersions(info.version, APP_VERSION) > 0) {
+      this.showUpdateDialog(this.state.updateInfo);
+      return;
+    }
+    toast(`You're on the latest version (v${APP_VERSION})`);
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) await reg.update();
+    } catch (_) { /* ignore */ }
+    if (this.state.view === 'settings') this.render();
+  },
+
+  showUpdateDialog(info) {
+    if (!info) return;
+    const notes = (info.notes || []).slice(0, 8).map(note => '• ' + note).join('\n');
+    const message = `You are currently on v${APP_VERSION}. Version ${info.version}${info.released ? ` was released on ${info.released}` : ''}.\n\n${notes || 'A new version is ready.'}\n\nYour invoices, customers and settings are not affected.`;
+    confirmDialog(
+      `Update available — v${info.version}`,
+      message,
+      async () => {
+        this._manualUpdate = true;
+        try {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg) {
+            await reg.update();
+            const worker = reg.installing || reg.waiting;
+            if (worker && worker.state !== 'activated' && worker.state !== 'redundant') {
+              await new Promise((resolve) => {
+                const timer = setTimeout(resolve, 6000);
+                worker.addEventListener('statechange', () => {
+                  if (['installed', 'activated', 'redundant'].includes(worker.state)) {
+                    clearTimeout(timer);
+                    resolve();
+                  }
+                });
+              });
+            }
+            if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+          }
+        } catch (e) {
+          console.warn('Could not refresh service worker:', e);
+        }
+        location.reload();
+      },
+      { confirmLabel: 'Reload & Update', danger: false, cancelLabel: 'Later' }
+    );
+  },
+
+  async openWhatsNew() {
+    let info = this.state.updateInfo;
+    if (!info) {
+      try {
+        info = await this.fetchReleaseInfo();
+        this.state.updateInfo = { ...info, checkedAt: Date.now() };
+      } catch (e) {
+        console.warn('Release notes unavailable:', e);
+      }
+    }
+    if (!info) {
+      toast('Release notes are unavailable offline');
+      return;
+    }
+    const notes = (info.notes || []).map(note => '• ' + note).join('\n');
+    showModal(`
+      <h3 class="modal-title">What's New — v${escapeHTML(info.version)}</h3>
+      <p style="color:var(--text-secondary); font-size:12px; margin:0 0 12px;">${info.released ? 'Released ' + escapeHTML(info.released) : ''}</p>
+      <div class="release-notes">${escapeHTML(notes || 'No release notes for this version.')}</div>
+      <button class="btn btn-primary btn-block" onclick="closeModal()">Close</button>
+    `);
+  },
+
   async downloadBackup() {
     try {
+      Store.data.lastBackupAt = Date.now();
       const json = await Store.exportBackup();
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `crossed-threads-backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.download = `crossed-threads-backup-${todayStr()}.json`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      await Store.persist();
+      const lastEl = document.getElementById('last-backup-value');
+      if (lastEl) lastEl.textContent = `${formatDate(todayStr())} (today)`;
       toast('Backup downloaded');
+      if (this.state.view === 'home') this.render();
     } catch (e) {
       toast('Backup failed');
       console.error(e);
@@ -2465,7 +3874,7 @@ const App = {
           await Store.importBackup(text);
           toast('Backup restored successfully');
           this.render();
-        });
+        }, { confirmLabel: 'Restore Backup', danger: false });
       } catch (e) {
         toast('Invalid backup file');
         console.error(e);
@@ -2493,7 +3902,7 @@ const App = {
   },
 
   saveSecuritySetting(key, value) {
-    if (!Store.data.security) Store.data.security = { pin: '1234', enabled: true };
+    if (!Store.data.security) Store.data.security = { pin: DEFAULT_PIN, enabled: true };
     Store.data.security[key] = value;
     Store.save();
     toast('Security updated');
@@ -2503,17 +3912,20 @@ const App = {
   openChangePinModal() {
     showModal(`
       <h3 class="modal-title">Change PIN</h3>
+      <p style="color:var(--text-secondary); margin:0 0 16px; font-size:12.5px; line-height:1.5;">
+        Use 4–6 digits. A 6-digit PIN is much harder to guess than 4 digits. Avoid the factory default ${DEFAULT_PIN}, 1234, birth years and your phone number.
+      </p>
       <div class="form-group">
         <label class="form-label">Current PIN</label>
-        <input type="password" class="form-input" id="pin-current" placeholder="Enter current PIN" maxlength="4" inputmode="numeric">
+        <input type="password" class="form-input" id="pin-current" placeholder="Enter current PIN" maxlength="6" inputmode="numeric" autocomplete="off">
       </div>
       <div class="form-group">
-        <label class="form-label">New PIN (4 digits)</label>
-        <input type="password" class="form-input" id="pin-new" placeholder="Enter new PIN" maxlength="4" inputmode="numeric">
+        <label class="form-label">New PIN (4–6 digits)</label>
+        <input type="password" class="form-input" id="pin-new" placeholder="e.g. 10519" maxlength="6" inputmode="numeric" autocomplete="off">
       </div>
       <div class="form-group">
         <label class="form-label">Confirm New PIN</label>
-        <input type="password" class="form-input" id="pin-confirm" placeholder="Confirm new PIN" maxlength="4" inputmode="numeric">
+        <input type="password" class="form-input" id="pin-confirm" placeholder="Confirm new PIN" maxlength="6" inputmode="numeric" autocomplete="off">
       </div>
       <div style="display:flex; gap:8px; margin-top:8px">
         <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
@@ -2522,18 +3934,208 @@ const App = {
     `);
   },
 
-  changePin() {
+  async changePin() {
     const cur = document.getElementById('pin-current').value;
     const nw = document.getElementById('pin-new').value;
     const cf = document.getElementById('pin-confirm').value;
-    const sec = Store.data.security || { pin: '1234' };
-    if (cur !== (sec.pin || '1234')) { toast('Current PIN is incorrect'); return; }
-    if (nw.length !== 4 || !/^\d{4}$/.test(nw)) { toast('New PIN must be 4 digits'); return; }
+    const sec = Store.data.security || { pin: DEFAULT_PIN };
+    if (cur !== (sec.pin || DEFAULT_PIN)) { toast('Current PIN is incorrect'); return; }
+    if (!/^\d{4,6}$/.test(nw)) { toast('New PIN must be 4–6 digits'); return; }
     if (nw !== cf) { toast('PINs do not match'); return; }
     Store.data.security.pin = nw;
-    Store.save();
+    await Store.persist();
     closeModal();
-    toast('PIN changed successfully');
+    toast(`PIN changed to ${nw.length} digits`);
+    this.render();
+    if (!Store.data.security.recoveryHash) {
+      await this.createRecoveryCode();
+    }
+  },
+
+  openRecoveryCodeSettings() {
+    const sec = Store.data.security || {};
+    if (sec.recoveryHash) {
+      confirmDialog(
+        'Replace Recovery Code',
+        'Create a new recovery code? The existing code will stop working immediately.',
+        () => this.createRecoveryCode(),
+        { confirmLabel: 'Create New Code', danger: false }
+      );
+    } else {
+      this.createRecoveryCode();
+    }
+  },
+
+  async createRecoveryCode() {
+    try {
+      if (!window.crypto || !window.crypto.subtle) {
+        toast('Recovery codes require the https app (GitHub Pages)');
+        return;
+      }
+      const code = generateRecoveryCode();
+      const hash = await hashRecoveryCode(code);
+      if (!Store.data.security) Store.data.security = { pin: DEFAULT_PIN, enabled: true };
+      Store.data.security.recoveryHash = hash;
+      Store.data.security.recoveryCreatedAt = Date.now();
+      await Store.persist();
+      this.render();
+      this.showRecoveryCode(code);
+    } catch (e) {
+      console.error('Recovery code creation failed', e);
+      toast('Could not create a recovery code');
+    }
+  },
+
+  showRecoveryCode(code) {
+    const formatted = formatRecoveryCode(code);
+    this._lastRecoveryCode = code;
+    showModal(`
+      <h3 class="modal-title">Save your recovery code</h3>
+      <p style="color:var(--text-secondary); margin:0 0 14px; font-size:13px; line-height:1.5;">
+        If you forget your PIN, tap <strong>Forgot PIN?</strong> on the lock screen and enter this code. It is shown only once.
+      </p>
+      <div class="recovery-code-box">${formatted}</div>
+      <p style="color:var(--text-tertiary); margin:0 0 14px; font-size:11px; line-height:1.5;">
+        Keep it private — anyone with this code can reset your PIN. Store it with your JSON backup.
+      </p>
+      <div class="share-actions">
+        <button class="btn btn-secondary" onclick="App.copyRecoveryCode()">Copy</button>
+        <button class="btn btn-secondary" onclick="App.downloadRecoveryCode()">Download</button>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="App.closeRecoveryCodeModal()">I've saved it</button>
+    `);
+    // Force an explicit acknowledgement so the one-time code isn't lost by a stray tap.
+    const overlay = document.querySelector('.modal-overlay');
+    if (overlay) overlay.onclick = null;
+  },
+
+  copyRecoveryCode() {
+    if (!this._lastRecoveryCode) return;
+    const text = formatRecoveryCode(this._lastRecoveryCode);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => toast('Recovery code copied'))
+        .catch(() => this.fallbackCopyText(text));
+    } else {
+      this.fallbackCopyText(text);
+    }
+  },
+
+  fallbackCopyText(text) {
+    try {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand('copy');
+      area.remove();
+      toast('Recovery code copied');
+    } catch (e) {
+      toast('Could not copy — select the code manually');
+    }
+  },
+
+  downloadRecoveryCode() {
+    if (!this._lastRecoveryCode) return;
+    const code = formatRecoveryCode(this._lastRecoveryCode);
+    const text = [
+      'Crossed Threads — PIN recovery code',
+      '',
+      code,
+      '',
+      `Created: ${formatDate(todayStr())}`,
+      '',
+      'Use this code on the lock screen: Forgot PIN? → enter this code → set a new PIN.',
+      'Keep it private. Anyone with this code can reset your PIN.',
+      'A new code is generated each time you replace it or recover your PIN.'
+    ].join('\n');
+    this.saveBlob(new Blob([text], { type: 'text/plain' }), 'crossed-threads-recovery-code.txt');
+    toast('Recovery code downloaded');
+  },
+
+  closeRecoveryCodeModal() {
+    this._lastRecoveryCode = null;
+    closeModal();
+  },
+
+  openRecoveryModal() {
+    const sec = Store.data.security || {};
+    if (!sec.recoveryHash) {
+      showModal(`
+        <h3 class="modal-title">Forgot PIN?</h3>
+        <p style="color:var(--text-secondary); margin:0 0 14px; font-size:13px; line-height:1.5;">
+          No recovery code has been created on this phone yet, so the PIN cannot be recovered inside the app.
+        </p>
+        <p style="color:var(--text-secondary); margin:0 0 16px; font-size:13px; line-height:1.5;">
+          Unlock with your PIN, then create one in <strong>Settings → Security &amp; App Lock</strong>. If you cannot unlock, restore a JSON backup or reset the app (this erases local data).
+        </p>
+        <button class="btn btn-secondary btn-block" onclick="closeModal()">Close</button>
+      `);
+      return;
+    }
+    showModal(`
+      <h3 class="modal-title">Recover with code</h3>
+      <p style="color:var(--text-secondary); margin:0 0 14px; font-size:13px; line-height:1.5;">
+        Enter the recovery code you saved, then choose a new 4–6 digit PIN. The recovery code is not your PIN.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Recovery code</label>
+        <input type="text" class="form-input" id="recovery-code" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="24" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">New PIN</label>
+          <input type="password" class="form-input" id="recovery-new-pin" placeholder="4–6 digits" maxlength="6" inputmode="numeric" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm PIN</label>
+          <input type="password" class="form-input" id="recovery-confirm-pin" placeholder="Repeat PIN" maxlength="6" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1" onclick="App.resetPinWithRecovery()">Reset PIN</button>
+      </div>
+    `);
+    setTimeout(() => document.getElementById('recovery-code')?.focus(), 80);
+  },
+
+  async resetPinWithRecovery() {
+    const code = document.getElementById('recovery-code').value;
+    const newPin = document.getElementById('recovery-new-pin').value;
+    const confirmPin = document.getElementById('recovery-confirm-pin').value;
+    const sec = Store.data.security || {};
+    if (!sec.recoveryHash) { toast('No recovery code is set'); return; }
+    if (!/^\d{4,6}$/.test(newPin)) { toast('New PIN must be 4–6 digits'); return; }
+    if (newPin !== confirmPin) { toast('PINs do not match'); return; }
+    let hash;
+    try {
+      hash = await hashRecoveryCode(code);
+    } catch (e) {
+      console.error(e);
+      toast('Recovery codes require the https app');
+      return;
+    }
+    if (hash !== sec.recoveryHash) { toast('Incorrect recovery code'); return; }
+    try {
+      const newCode = generateRecoveryCode();
+      sec.pin = newPin;
+      sec.recoveryHash = await hashRecoveryCode(newCode);
+      sec.recoveryCreatedAt = Date.now();
+      await Store.persist();
+      sessionStorage.setItem('crossed_threads_unlocked', 'true');
+      this.state.pinInput = '';
+      this.state.view = 'home';
+      this.state.params = {};
+      this.render();
+      this.showRecoveryCode(newCode);
+      toast('PIN reset. Save your new recovery code.');
+    } catch (e) {
+      console.error('PIN recovery failed', e);
+      toast('Could not reset the PIN');
+    }
   },
 
   removeLogo() {
@@ -2542,7 +4144,7 @@ const App = {
       Store.save();
       toast('Logo removed');
       this.render();
-    });
+    }, { confirmLabel: 'Remove Logo' });
   },
 
   setTheme(theme) {
@@ -2552,19 +4154,31 @@ const App = {
     this.render();
   },
 
-  // ==================== Products ====================
+  setInvoiceTemplate(template) {
+    if (!['classic', 'modern'].includes(template)) return;
+    Store.data.business.invoiceTemplate = template;
+    Store.save();
+    toast(template === 'modern' ? 'Modern template selected' : 'Classic template selected');
+    this.render();
+  },
+
+  // ==================== Products & Services (full CRUD) ====================
   renderProducts() {
-    const products = (Store.data.products || []).filter(p => !p.archived);
+    const all = Store.data.products || [];
+    const activeCount = all.filter(p => !p.archived).length;
+    const archivedCount = all.filter(p => p.archived).length;
+    const tab = this.state.productTab === 'archived' ? 'archived' : 'active';
     const search = (this.state.search || '').toLowerCase();
-    let list = products;
+    let list = all.filter(p => tab === 'archived' ? p.archived : !p.archived);
     if (search) {
-      list = products.filter(p =>
+      list = list.filter(p =>
         (p.name || '').toLowerCase().includes(search) ||
         (p.category || '').toLowerCase().includes(search) ||
         (p.description || '').toLowerCase().includes(search)
       );
     }
     list = [...list].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
     return `<div class="page">
       <div class="page-header">
         <div class="topbar">
@@ -2581,20 +4195,46 @@ const App = {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" placeholder="Search catalogue..." value="${escapeHTML(this.state.search||'')}" oninput="App.state.search=this.value;App.render()">
         </div>
-        <button class="btn btn-primary btn-block mb-16" onclick="App.addProduct()">+ Add Product / Service</button>
-        <p style="font-size:12px; color:var(--text-secondary); margin:0 0 12px;">Type a description on any invoice to get suggestions from this catalogue.</p>
-        ${list.length === 0 ? this.emptyState('No products yet','Add products and services for quick invoicing','Add Product','App.addProduct()') :
-          list.map(p => `
+        <div class="tabs">
+          <button class="tab ${tab === 'active' ? 'active' : ''}" onclick="App.state.productTab='active';App.state.search='';App.render()">Active (${activeCount})</button>
+          <button class="tab ${tab === 'archived' ? 'active' : ''}" onclick="App.state.productTab='archived';App.state.search='';App.render()">Archived (${archivedCount})</button>
+        </div>
+        ${tab === 'active' ? `
+          <button class="btn btn-primary btn-block mb-16" onclick="App.addProduct()">+ Add Product / Service</button>
+          <p style="font-size:12px; color:var(--text-secondary); margin:0 0 12px;">Type a description on any invoice to get suggestions from this catalogue.</p>
+        ` : `
+          <p style="font-size:12px; color:var(--text-secondary); margin:0 0 16px;">Archived items are hidden from invoice suggestions. Restore them or delete them permanently.</p>
+        `}
+        ${list.length === 0
+          ? (tab === 'active'
+              ? this.emptyState('No products yet','Add products and services for quick invoicing','Add Product','App.addProduct()')
+              : this.emptyState('No archived items','Items you remove from the catalogue will appear here', null, null))
+          : list.map(p => `
             <div class="card">
               <div class="product-item">
                 <div style="flex:1; min-width:0">
                   <div style="font-weight:600; font-size:14px">${escapeHTML(p.name)}</div>
                   ${p.category ? `<div style="font-size:11px; color:var(--text-tertiary); margin-top:2px">${escapeHTML(p.category)}</div>` : ''}
+                  ${p.description ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:2px">${escapeHTML(p.description)}</div>` : ''}
                   <div class="product-price">${formatCurrency(p.price)}</div>
                 </div>
-                <button class="icon-btn" style="width:32px;height:32px" onclick="event.stopPropagation();App.deleteProduct('${p.id}')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-                </button>
+                <div style="display:flex; gap:6px; flex-shrink:0">
+                  ${tab === 'active' ? `
+                    <button class="icon-btn" style="width:32px; height:32px" onclick="App.editProduct('${p.id}')" aria-label="Edit ${escapeHTML(p.name)}" title="Edit">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="icon-btn" style="width:32px; height:32px" onclick="App.deleteProduct('${p.id}')" aria-label="Archive ${escapeHTML(p.name)}" title="Archive">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                    </button>
+                  ` : `
+                    <button class="icon-btn" style="width:32px; height:32px" onclick="App.restoreProduct('${p.id}')" aria-label="Restore ${escapeHTML(p.name)}" title="Restore">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    </button>
+                    <button class="icon-btn" style="width:32px; height:32px" onclick="App.deleteProductPermanently('${p.id}')" aria-label="Delete ${escapeHTML(p.name)} permanently" title="Delete permanently">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                    </button>
+                  `}
+                </div>
               </div>
             </div>
           `).join('')}
@@ -2603,43 +4243,67 @@ const App = {
   },
 
   addProduct() {
+    this.openProductModal(null);
+  },
+
+  editProduct(id) {
+    const product = (Store.data.products || []).find(p => p.id === id);
+    if (!product) { toast('Product not found'); return; }
+    this.openProductModal(product);
+  },
+
+  openProductModal(product) {
+    const p = product || null;
     showModal(`
-      <h3 class="modal-title">Add Product / Service</h3>
+      <h3 class="modal-title">${p ? 'Edit' : 'Add'} Product / Service</h3>
       <div class="form-group">
         <label class="form-label">Name</label>
-        <input type="text" class="form-input" id="prod-name" placeholder="e.g. Full Interior Detailing">
+        <input type="text" class="form-input" id="prod-name" placeholder="e.g. Full Interior Detailing" value="${p ? escapeHTML(p.name || '') : ''}">
       </div>
       <div class="form-group">
         <label class="form-label">Category (optional)</label>
-        <input type="text" class="form-input" id="prod-category" placeholder="e.g. Upholstery, Detailing, Furniture">
+        <input type="text" class="form-input" id="prod-category" placeholder="e.g. Upholstery, Detailing, Furniture" value="${p ? escapeHTML(p.category || '') : ''}">
       </div>
       <div class="form-group">
         <label class="form-label">Price</label>
-        <input type="number" class="form-input" id="prod-price" placeholder="0" min="0" step="any">
+        <input type="number" class="form-input" id="prod-price" placeholder="0" min="0" step="any" value="${p ? (Number(p.price) || 0) : ''}">
       </div>
       <div class="form-group">
         <label class="form-label">Notes (optional)</label>
-        <input type="text" class="form-input" id="prod-desc" placeholder="Short description">
+        <input type="text" class="form-input" id="prod-desc" placeholder="Short description" value="${p ? escapeHTML(p.description || '') : ''}">
       </div>
       <div style="display:flex; gap:8px; margin-top:8px">
         <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-primary" style="flex:1" onclick="App.saveProduct()">Save</button>
+        <button class="btn btn-primary" style="flex:1" onclick="App.saveProduct(${p ? `'${p.id}'` : 'null'})">${p ? 'Save Changes' : 'Save'}</button>
       </div>
     `);
   },
 
-  saveProduct() {
+  saveProduct(editId) {
     const name = document.getElementById('prod-name').value.trim();
     const category = (document.getElementById('prod-category') && document.getElementById('prod-category').value.trim()) || '';
     const price = parseFloat(document.getElementById('prod-price').value) || 0;
     const description = (document.getElementById('prod-desc') && document.getElementById('prod-desc').value.trim()) || '';
     if (!name) { toast('Name is required'); return; }
     if (!Store.data.products) Store.data.products = [];
-    // Avoid exact-name duplicates (case-insensitive)
-    const exists = Store.data.products.find(p => !p.archived && (p.name || '').toLowerCase() === name.toLowerCase());
+    // Avoid exact-name duplicates (case-insensitive), except the item being edited.
+    const exists = Store.data.products.find(p => !p.archived && p.id !== editId && (p.name || '').toLowerCase() === name.toLowerCase());
     if (exists) {
-      toast('Similar item already exists — select it from suggestions instead');
+      toast('A product with that name already exists');
+      return;
+    }
+    if (editId) {
+      const product = Store.data.products.find(p => p.id === editId);
+      if (!product) { toast('Product not found'); return; }
+      product.name = name;
+      product.category = category;
+      product.description = description;
+      product.price = price;
+      product.updatedAt = Date.now();
+      Store.save();
       closeModal();
+      toast('Product updated');
+      this.render();
       return;
     }
     Store.data.products.push({ id: uid(), name, category, description, price, archived: false, createdAt: Date.now() });
@@ -2650,14 +4314,37 @@ const App = {
   },
 
   deleteProduct(id) {
-    confirmDialog('Delete Product', 'Remove this product from the catalogue? Historical invoices are not affected.', () => {
-      const p = Store.data.products.find(x => x.id === id);
-      if (p) { p.archived = true; } // soft-delete / archive
-      else Store.data.products = Store.data.products.filter(x => x.id !== id);
+    const product = (Store.data.products || []).find(p => p.id === id);
+    if (!product) return;
+    confirmDialog('Archive Product', `Remove "${product.name}" from the active catalogue? Historical invoices are not affected. You can restore it from the Archived tab.`, () => {
+      product.archived = true;
+      product.archivedAt = Date.now();
       Store.save();
-      toast('Product removed');
+      toast('Product archived');
       this.render();
-    });
+    }, { confirmLabel: 'Archive Product' });
+  },
+
+  restoreProduct(id) {
+    const product = (Store.data.products || []).find(p => p.id === id);
+    if (!product) return;
+    product.archived = false;
+    delete product.archivedAt;
+    product.updatedAt = Date.now();
+    Store.save();
+    toast('Product restored');
+    this.render();
+  },
+
+  deleteProductPermanently(id) {
+    const product = (Store.data.products || []).find(p => p.id === id);
+    if (!product) return;
+    confirmDialog('Delete Product Permanently', `Permanently delete "${product.name}"? This cannot be undone. Historical invoices keep their own item descriptions.`, () => {
+      Store.data.products = (Store.data.products || []).filter(p => p.id !== id);
+      Store.save();
+      toast('Product deleted');
+      this.render();
+    }, { confirmLabel: 'Delete Forever' });
   },
 
   // ==================== Expenses ====================
@@ -2789,6 +4476,120 @@ const App = {
     });
   },
 
+  buildModernInvoiceHtml(doc) {
+    const b = Store.data.business;
+    const isQuote = doc.type === 'quote';
+    const status = calculateStatus(doc);
+    const projectType = doc.projectType || 'Vehicle';
+    const makeLabel = this.projectMakeLabel(projectType);
+    const logo = printLogoMark(76);
+    const stamp = renderStampSVG(doc.date, { simple: true });
+    const docTitle = isQuote ? 'QUOTATION' : 'TAX INVOICE';
+    const items = (doc.items || []).map(item => `
+      <tr>
+        <td>${escapeHTML(item.description)}</td>
+        <td>${item.qty}</td>
+        <td>${formatCurrency(item.price)}</td>
+        <td>${formatCurrency(item.total)}</td>
+      </tr>`).join('');
+    return `
+      <div class="invoice-print invoice-modern">
+        <div class="m-topbar">
+          <div class="m-star">${crossedNeedlesSVG(48, '#c9a227')}</div>
+        </div>
+        <div class="m-inner">
+          <div class="m-watermark">CROSSED THREADS</div>
+
+          <div class="m-header">
+            <div class="m-brand">
+              <div class="m-logo">${logo}</div>
+              <div>
+                <div class="m-company-name">${escapeHTML(b.name || 'Crossed Threads')}</div>
+                <div class="m-tagline">Automotive · Upholstery · Furniture</div>
+                <div class="m-phone">${escapeHTML(b.phone || '')}</div>
+                <div class="m-company-lines">${escapeHTML(b.address || '')}</div>
+              </div>
+            </div>
+            <div class="m-company-meta">
+              <strong>${escapeHTML(b.name || 'Crossed Threads')}</strong><br>
+              ${escapeHTML(b.address || '')}<br>
+              ${escapeHTML(b.phone || '')}<br>
+              ${escapeHTML(b.email || '')}
+            </div>
+          </div>
+
+          <div class="m-title-row">
+            <div class="m-party">
+              <div class="m-party-row"><span class="k">Client</span><span class="v">${escapeHTML(doc.customerName || 'Walk-in Customer')}</span></div>
+              <div class="m-party-row"><span class="k">Phone</span><span class="v">${escapeHTML(doc.customerPhone || '—')}</span></div>
+              <div class="m-party-row"><span class="k">Email</span><span class="v">${escapeHTML(doc.customerEmail || '—')}</span></div>
+              <div class="m-party-row"><span class="k">Address</span><span class="v">${escapeHTML(doc.customerAddress || '—')}</span></div>
+            </div>
+            <div class="m-doc-title">
+              <div class="m-doc-type ${isQuote ? 'quote' : ''}">${docTitle}</div>
+              <div class="m-doc-meta">
+                <span class="k">${isQuote ? 'Quote No.' : 'Invoice No.'}</span><span class="v"># ${escapeHTML(doc.number)}</span>
+                <span class="k">Date</span><span class="v">${formatDate(doc.date)}</span>
+                ${!isQuote && doc.dueDate ? `<span class="k">Due Date</span><span class="v">${formatDate(doc.dueDate)}</span>` : ''}
+                ${!isQuote ? `<span class="k">Status</span><span class="v">${statusLabel(status)}</span>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <div class="m-band">Scope of Works</div>
+          <div class="m-scope">
+            <div class="m-scope-grid">
+              <div class="m-scope-item"><div class="k">Type</div><div class="v">${escapeHTML(projectType)}</div></div>
+              <div class="m-scope-item"><div class="k">${makeLabel}</div><div class="v">${escapeHTML(doc.vehicleMake || '—')}</div></div>
+              <div class="m-scope-item"><div class="k">Model</div><div class="v">${escapeHTML(doc.vehicleModel || '—')}</div></div>
+              <div class="m-scope-item"><div class="k">Ref / Reg</div><div class="v">${escapeHTML(doc.vehicleReg || '—')}</div></div>
+            </div>
+            ${doc.notes ? `<div class="m-text" style="margin-top:2mm">${escapeHTML(doc.notes)}</div>` : ''}
+          </div>
+
+          <table class="m-table">
+            <thead>
+              <tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Total Price</th></tr>
+            </thead>
+            <tbody>${items}</tbody>
+          </table>
+
+          <div class="m-total-wrap">
+            <div class="m-totals">
+              <div class="m-total-row"><span class="lbl">Subtotal</span><span class="val">${formatCurrency(doc.subtotal)}</span></div>
+              ${doc.tax > 0 ? `<div class="m-total-row"><span class="lbl">TAX (${doc.taxRate}%)</span><span class="val">${formatCurrency(doc.tax)}</span></div>` : ''}
+              <div class="m-total-row grand"><span class="lbl">Invoice Total</span><span class="val">${formatCurrency(doc.total)}</span></div>
+              ${!isQuote && doc.amountPaid > 0 ? `<div class="m-total-row"><span class="lbl">Less Total Paid</span><span class="val">- ${formatCurrency(doc.amountPaid)}</span></div>` : ''}
+              ${!isQuote && doc.balance > 0 ? `<div class="m-total-row balance"><span class="lbl">BALANCE DUE</span><span class="val">${formatCurrency(doc.balance)}</span></div>` : ''}
+            </div>
+          </div>
+
+          <div class="m-bottom">
+            <div>
+              <div class="m-block-title">Payment Options</div>
+              <div class="m-pay-stamp">
+                <div class="m-text">${escapeHTML(b.paymentDetails || 'Payment due on delivery.')}</div>
+                ${stamp}
+              </div>
+            </div>
+            <div>
+              <div class="m-block-title">Terms &amp; Conditions</div>
+              <div class="m-text">${escapeHTML(b.footerNotes || 'Thank you for your business.')}</div>
+              <div class="m-sign">
+                <div class="m-sign-name">${escapeHTML(b.name || 'Crossed Threads')}</div>
+                Authorised Signature
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-footer">
+          <div class="brand">CROSSED THREADS</div>
+          <div class="meta">${escapeHTML(b.phone || '')} <span class="gold-dot">·</span> ${escapeHTML(b.email || '')}<br>AUTOMOTIVE <span class="gold-dot">·</span> UPHOLSTERY <span class="gold-dot">·</span> FURNITURE</div>
+        </div>
+      </div>`;
+  },
+
   // ==================== Sharing, PDF, Duplicate, Cancel, Convert ====================
   async generatePrintHtml(docId) {
     // Reuse the existing printInvoice logic but return the HTML string
@@ -2800,22 +4601,75 @@ const App = {
     return document.getElementById('print-root').innerHTML;
   },
 
-  async downloadInvoicePDF(docId) {
-    const doc = [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === docId);
-    if (!doc) return;
-    toast('Generating PDF…');
-    this.printInvoice(docId, { noPrint: true }); // builds into print-root without opening print dialog
+  getDocument(docId) {
+    return [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === docId);
+  },
+
+  async buildPrintElement(docId) {
+    const doc = this.getDocument(docId);
+    if (!doc) throw new Error('Document not found');
+    this.printInvoice(docId, { noPrint: true });
     const element = document.querySelector('#print-root .invoice-print');
-    if (!element) { toast('Print layout not ready'); return; }
+    if (!element) throw new Error('Invoice layout not ready');
+    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) { /* ignore */ }
+    return element;
+  },
+
+  async renderInvoiceCanvas(docId) {
+    const element = await this.buildPrintElement(docId);
     const opt = {
       margin: [10, 10, 10, 10],
-      filename: buildPrintFilename(doc) + '.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
+    return html2pdf().set(opt).from(element).toCanvas().get('canvas');
+  },
+
+  async renderShareAsset(docId, format) {
+    const doc = this.getDocument(docId);
+    if (!doc) throw new Error('Document not found');
+    const base = buildPrintFilename(doc);
+    const canvas = await this.renderInvoiceCanvas(docId);
+    const toJpegBlob = (quality) => new Promise((resolve, reject) => {
+      canvas.toBlob(created => created ? resolve(created) : reject(new Error('Image render failed')), 'image/jpeg', quality);
+    });
+
+    if (format === 'pdf') {
+      const jpegBlob = await toJpegBlob(0.94);
+      const bytes = new Uint8Array(await jpegBlob.arrayBuffer());
+      const pdfBlob = buildSinglePagePdf(bytes, canvas.width, canvas.height);
+      const file = new File([pdfBlob], base + '.pdf', { type: 'application/pdf' });
+      return { type: 'pdf', file, blob: pdfBlob, size: pdfBlob.size };
+    }
+
+    const blob = await toJpegBlob(0.92);
+    const file = new File([blob], base + '.jpg', { type: 'image/jpeg' });
+    return {
+      type: 'image', file, blob, size: file.size,
+      dataUrl: canvas.toDataURL('image/jpeg', 0.8),
+      width: canvas.width, height: canvas.height
+    };
+  },
+
+  saveBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  },
+
+  async downloadInvoicePDF(docId) {
+    const doc = this.getDocument(docId);
+    if (!doc) return;
+    toast('Generating PDF…');
     try {
-      await html2pdf().set(opt).from(element).save();
+      const asset = await this.renderShareAsset(docId, 'pdf');
+      this.saveBlob(asset.blob, asset.file.name);
       toast('PDF downloaded');
     } catch (e) {
       console.error(e);
@@ -2823,8 +4677,171 @@ const App = {
     }
   },
 
-  shareWhatsApp(docId) {
-    const doc = [...Store.data.invoices, ...Store.data.quotes].find(d => d.id === docId);
+  // Share a real image or PDF through the device share sheet (WhatsApp, email, etc.)
+  openShareSheet(docId) {
+    const doc = this.getDocument(docId);
+    if (!doc) return;
+    const isQuote = doc.type === 'quote';
+    showModal(`
+      <h3 class="modal-title">Share ${isQuote ? 'Quotation' : 'Invoice'}</h3>
+      <p style="color:var(--text-secondary); margin:0 0 16px; font-size:13px; line-height:1.5;">
+        Send ${escapeHTML(doc.number)} as a picture or a PDF document — not just plain text.
+      </p>
+      <div class="share-options">
+        <button class="share-option" onclick="App.shareDocument('${docId}', 'image')">
+          <span class="share-option-icon" style="background:var(--success-bg); color:var(--success)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </span>
+          <span style="flex:1"><span class="share-option-title">Send as image</span><span class="share-option-desc">JPG · best for WhatsApp</span></span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="share-option" onclick="App.shareDocument('${docId}', 'pdf')">
+          <span class="share-option-icon" style="background:var(--danger-bg); color:var(--danger)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </span>
+          <span style="flex:1"><span class="share-option-title">Send as PDF</span><span class="share-option-desc">Printable A4 document</span></span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="share-option" onclick="App.sendDocumentText('${docId}')">
+          <span class="share-option-icon" style="background:var(--card-hover); color:var(--text-secondary)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </span>
+          <span style="flex:1"><span class="share-option-title">Send as text</span><span class="share-option-desc">Plain WhatsApp message</span></span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <button class="btn btn-secondary btn-block" onclick="closeModal()">Cancel</button>
+    `);
+  },
+
+  async shareDocument(docId, format) {
+    const doc = this.getDocument(docId);
+    if (!doc) return;
+    showModal(`
+      <h3 class="modal-title">Preparing ${format === 'pdf' ? 'PDF' : 'image'}…</h3>
+      <p style="color:var(--text-secondary); margin:0 0 16px; font-size:13px;">Rendering ${escapeHTML(doc.number)}. This takes a few seconds.</p>
+      <div class="share-loading"><span class="spinner"></span></div>
+    `);
+    let asset;
+    try {
+      asset = await this.renderShareAsset(docId, format);
+    } catch (e) {
+      console.error(e);
+      closeModal();
+      toast('Could not prepare the document — try Print or Download PDF');
+      return;
+    }
+    this._preparedShare = { docId, asset, at: Date.now() };
+    const result = await this.tryShareFile(asset, doc);
+    if (result === 'shared') {
+      closeModal();
+      toast(format === 'pdf' ? 'PDF shared' : 'Image shared');
+      return;
+    }
+    if (result === 'cancelled') { closeModal(); return; }
+    this.showShareReady(docId, asset, result);
+  },
+
+  async tryShareFile(asset, doc) {
+    if (!navigator.share) return 'unsupported';
+    if (navigator.canShare) {
+      try {
+        if (!navigator.canShare({ files: [asset.file] })) return 'unsupported';
+      } catch (_) { return 'unsupported'; }
+    }
+    const isQuote = doc.type === 'quote';
+    try {
+      await navigator.share({
+        files: [asset.file],
+        title: `${isQuote ? 'Quotation' : 'Invoice'} ${doc.number}`,
+        text: this.shareCaption(doc)
+      });
+      return 'shared';
+    } catch (e) {
+      if (e && e.name === 'AbortError') return 'cancelled';
+      console.warn('Native share failed', e);
+      return 'failed';
+    }
+  },
+
+  shareCaption(doc) {
+    const isQuote = doc.type === 'quote';
+    const status = calculateStatus(doc);
+    let text = `${isQuote ? 'Quotation' : 'Invoice'} ${doc.number} · ${formatCurrency(doc.total)}`;
+    if (!isQuote && (Number(doc.balance) || 0) > 0) text += ` · Balance ${formatCurrency(doc.balance)}`;
+    if (!isQuote && status === 'overdue') text += ' · OVERDUE';
+    return text;
+  },
+
+  showShareReady(docId, asset, reason) {
+    const isImage = asset.type === 'image';
+    const sizeKb = Math.max(1, Math.round((asset.size || 0) / 1024));
+    let canShare = false;
+    if (navigator.share) {
+      try { canShare = navigator.canShare ? navigator.canShare({ files: [asset.file] }) : true; } catch (_) { canShare = false; }
+    }
+    const note = canShare
+      ? (reason === 'failed'
+        ? 'The share sheet did not open. Tap Share to try again, or download the file.'
+        : 'Tap Share to open your share sheet, then choose WhatsApp.')
+      : 'Your browser cannot attach files directly. Download it, then attach it in WhatsApp.';
+    showModal(`
+      <h3 class="modal-title">${isImage ? 'Invoice image ready' : 'Invoice PDF ready'}</h3>
+      ${isImage && asset.dataUrl
+        ? `<div class="share-preview"><img src="${asset.dataUrl}" alt="Invoice preview"></div>`
+        : `<div class="share-file-pill">
+             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+             <span>PDF document · ${sizeKb} KB</span>
+           </div>`}
+      <p class="share-note">${note}</p>
+      <div class="share-actions">
+        ${canShare ? `<button class="btn btn-primary" onclick="App.sharePrepared('${docId}', '${asset.type}')">Share</button>` : ''}
+        <button class="btn btn-secondary" onclick="App.downloadPrepared('${docId}', '${asset.type}')">Download</button>
+      </div>
+      <button class="btn btn-secondary btn-block mb-8" onclick="App.sendDocumentText('${docId}')">Send as text instead</button>
+      <button class="btn btn-secondary btn-block" onclick="closeModal()">Cancel</button>
+    `);
+  },
+
+  async sharePrepared(docId, type) {
+    const prepared = this._preparedShare;
+    if (!prepared || prepared.docId !== docId || prepared.asset.type !== type) {
+      this.shareDocument(docId, type);
+      return;
+    }
+    const doc = this.getDocument(docId);
+    if (!doc) return;
+    const result = await this.tryShareFile(prepared.asset, doc);
+    if (result === 'shared') {
+      closeModal();
+      toast(type === 'pdf' ? 'PDF shared' : 'Image shared');
+      this._preparedShare = null;
+    } else if (result === 'cancelled') {
+      // Keep the sheet open so the user can try again.
+    } else {
+      toast('Could not open the share sheet — use Download instead');
+    }
+  },
+
+  async downloadPrepared(docId, type) {
+    const prepared = this._preparedShare;
+    let asset = (prepared && prepared.docId === docId && prepared.asset.type === type) ? prepared.asset : null;
+    if (!asset) {
+      toast('Preparing file…');
+      try {
+        asset = await this.renderShareAsset(docId, type);
+      } catch (e) {
+        console.error(e);
+        toast('Could not prepare the file');
+        return;
+      }
+    }
+    this.saveBlob(asset.blob, asset.file.name);
+    toast(type === 'pdf' ? 'PDF downloaded' : 'Image downloaded — attach it in WhatsApp');
+  },
+
+  sendDocumentText(docId) {
+    const doc = this.getDocument(docId);
     if (!doc) return;
     const b = Store.data.business;
     const isQuote = doc.type === 'quote';
@@ -2832,7 +4849,7 @@ const App = {
     let msg = `*${isQuote ? 'QUOTATION' : 'INVOICE'} from ${b.name}*\n`;
     msg += `No: ${doc.number}\nDate: ${formatDate(doc.date)}\n`;
     if (doc.customerName) msg += `Customer: ${doc.customerName}\n`;
-    if (doc.vehicleMake || doc.vehicleModel) msg += `Vehicle/Project: ${[doc.vehicleMake, doc.vehicleModel, doc.vehicleReg].filter(Boolean).join(' ')}\n`;
+    if (doc.vehicleMake || doc.vehicleModel) msg += `${doc.projectType || 'Project'}: ${[doc.vehicleMake, doc.vehicleModel, doc.vehicleReg].filter(Boolean).join(' ')}\n`;
     msg += `\n*Items:*\n`;
     (doc.items || []).forEach(it => {
       msg += `• ${it.description} — ${it.qty} × ${formatCurrency(it.price)} = ${formatCurrency(it.total)}\n`;
@@ -2846,6 +4863,7 @@ const App = {
     }
     if (b.paymentDetails) msg += `\n\nPayment details:\n${b.paymentDetails}`;
     msg += `\n\n${b.footerNotes || 'Thank you for your business.'}`;
+    closeModal();
     const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
     window.open(url, '_blank');
   },
@@ -2888,11 +4906,12 @@ const App = {
       customerPhone: src.customerPhone,
       customerEmail: src.customerEmail,
       customerAddress: src.customerAddress,
+      projectType: src.projectType || 'Vehicle',
       vehicleMake: src.vehicleMake,
       vehicleModel: src.vehicleModel,
       vehicleReg: src.vehicleReg,
       date: todayStr(),
-      dueDate: isQuote ? '' : new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+      dueDate: isQuote ? '' : addDaysStr(14),
       items: (src.items || []).map(it => ({ ...it })),
       taxRate: src.taxRate,
       subtotal: src.subtotal,
@@ -2904,6 +4923,7 @@ const App = {
       notes: src.notes || '',
       payments: [],
       createdAt: Date.now(),
+      ...(isQuote ? {} : { stage: 'new', stageUpdatedAt: Date.now() }),
       duplicatedFrom: src.id
     };
     if (isQuote) {
@@ -2938,11 +4958,12 @@ const App = {
         customerPhone: q.customerPhone,
         customerEmail: q.customerEmail,
         customerAddress: q.customerAddress,
+        projectType: q.projectType || 'Vehicle',
         vehicleMake: q.vehicleMake,
         vehicleModel: q.vehicleModel,
         vehicleReg: q.vehicleReg,
         date: todayStr(),
-        dueDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+        dueDate: addDaysStr(14),
         items: (q.items || []).map(it => ({ ...it })),
         taxRate: q.taxRate,
         subtotal: q.subtotal,
@@ -2954,6 +4975,7 @@ const App = {
         notes: q.notes || '',
         payments: [],
         createdAt: Date.now(),
+        stage: 'new', stageUpdatedAt: Date.now(),
         fromQuoteId: q.id
       };
       Store.data.invoices.push(inv);
@@ -2963,7 +4985,7 @@ const App = {
       Store.save();
       toast('Invoice created from quotation');
       this.navigate('invoice-detail', { id: inv.id });
-    });
+    }, { confirmLabel: 'Create Invoice', danger: false });
   },
 
   cancelInvoice(docId) {
@@ -2980,7 +5002,7 @@ const App = {
       Store.save();
       toast('Invoice cancelled');
       this.render();
-    });
+    }, { confirmLabel: 'Cancel Invoice' });
   },
 
   printReceipt(docId) {

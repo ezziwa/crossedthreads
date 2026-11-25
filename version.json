@@ -1,0 +1,10 @@
+{
+  "version": "1.5.0",
+  "released": "2026-11-25",
+  "notes": [
+    "The factory default PIN is now 2202 for fresh installs and after Delete All App Data.",
+    "Existing PINs are not changed by this update.",
+    "Default-PIN warnings were updated; set your own 4–6 digit PIN.",
+    "PIN recovery codes are still available in Settings → Security."
+  ]
+}
